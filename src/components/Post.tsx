@@ -11,6 +11,10 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import CommentSection from './CommentSection';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 export interface PostProps {
   id: string;
@@ -43,14 +47,52 @@ const Post = ({
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likes);
   const [showComments, setShowComments] = useState(false);
+  const { isAuthenticated, user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const likePostMutation = useMutation({
+    mutationFn: () => api.post(`/posts/${id}/like`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+    onError: () => {
+      // Revert optimistic update on error
+      setLiked(!liked);
+      setLikeCount(prev => liked ? prev + 1 : prev - 1);
+    }
+  });
+  
+  const unlikePostMutation = useMutation({
+    mutationFn: () => api.delete(`/posts/${id}/like`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+    onError: () => {
+      // Revert optimistic update on error
+      setLiked(!liked);
+      setLikeCount(prev => liked ? prev - 1 : prev + 1);
+    }
+  });
   
   const handleLike = () => {
-    if (liked) {
-      setLikeCount(prev => prev - 1);
-    } else {
-      setLikeCount(prev => prev + 1);
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like posts",
+        variant: "destructive",
+      });
+      return;
     }
+    
+    // Optimistic update
     setLiked(!liked);
+    setLikeCount(prev => liked ? prev - 1 : prev + 1);
+    
+    if (liked) {
+      unlikePostMutation.mutate();
+    } else {
+      likePostMutation.mutate();
+    }
   };
   
   const toggleComments = () => {
@@ -67,11 +109,13 @@ const Post = ({
     });
   };
   
+  const isAuthor = user?.id === author.id;
+  
   return (
     <div className="bg-white rounded-xl overflow-hidden mb-4 card-shadow animate-fade-in">
       <div className="p-4">
         <div className="flex items-start justify-between">
-          <Link to={`/profile/${author.id}`} className="flex items-center space-x-3 group">
+          <Link to={`/profile/${author.username}`} className="flex items-center space-x-3 group">
             <Avatar className="h-10 w-10">
               <AvatarImage src={author.avatar || "/placeholder.svg"} alt={author.name} />
               <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -93,6 +137,12 @@ const Post = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {isAuthor && (
+                <>
+                  <DropdownMenuItem>Edit Post</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500">Delete Post</DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuItem>Save Post</DropdownMenuItem>
               <DropdownMenuItem>Hide Post</DropdownMenuItem>
               <DropdownMenuItem>Report</DropdownMenuItem>
