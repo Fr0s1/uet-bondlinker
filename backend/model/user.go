@@ -10,21 +10,22 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	Name       string         `json:"name" gorm:"size:100;not null"`
-	Username   string         `json:"username" gorm:"size:50;not null;uniqueIndex"`
-	Email      string         `json:"email" gorm:"size:100;not null;uniqueIndex"`
-	Password   string         `json:"-" gorm:"column:password_hash;size:255;not null"`
-	Bio        *string        `json:"bio,omitempty" gorm:"type:text"`
-	Avatar     *string        `json:"avatar,omitempty" gorm:"size:255"`
-	Location   *string        `json:"location,omitempty" gorm:"size:100"`
-	Website    *string        `json:"website,omitempty" gorm:"size:255"`
-	CreatedAt  time.Time      `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt  time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
-	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
-	Followers  int            `json:"followers,omitempty" gorm:"-"`
-	Following  int            `json:"following,omitempty" gorm:"-"`
-	IsFollowed *bool          `json:"is_followed,omitempty" gorm:"-"`
+	ID             uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Name           string         `json:"name" gorm:"size:100;not null"`
+	Username       string         `json:"username" gorm:"size:50;not null;uniqueIndex"`
+	Email          string         `json:"email" gorm:"size:100;not null;uniqueIndex"`
+	Password       string         `json:"-" gorm:"column:password_hash;size:255;not null"`
+	Bio            *string        `json:"bio,omitempty" gorm:"type:text"`
+	Avatar         *string        `json:"avatar,omitempty" gorm:"size:255"`
+	Location       *string        `json:"location,omitempty" gorm:"size:100"`
+	Website        *string        `json:"website,omitempty" gorm:"size:255"`
+	FollowersCount int            `json:"followers" gorm:"default:0"`
+	FollowingCount int            `json:"following" gorm:"default:0"`
+	PostsCount     int            `json:"posts_count" gorm:"default:0"`
+	CreatedAt      time.Time      `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt      time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	DeletedAt      gorm.DeletedAt `json:"-" gorm:"index"`
+	IsFollowed     *bool          `json:"is_followed,omitempty" gorm:"-"`
 	
 	// Relations
 	Posts    []Post    `json:"-" gorm:"foreignKey:UserID"`

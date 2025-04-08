@@ -3,7 +3,6 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
 	"socialnet/config"
 	"socialnet/middleware"
@@ -30,6 +29,12 @@ func NewPostController(repo *repository.Repository, cfg *config.Config) *PostCon
 
 // GetPosts returns a list of posts
 func (pc *PostController) GetPosts(c *gin.Context) {
+	var filter model.PostFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
 	var currentUserID *uuid.UUID
 	
 	// Check if user is authenticated
@@ -38,20 +43,8 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		currentUserID = &userID
 	}
 	
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	
-	var filterUserID *uuid.UUID
-	if userIDStr := c.Query("user_id"); userIDStr != "" {
-		userID, err := uuid.Parse(userIDStr)
-		if err == nil {
-			filterUserID = &userID
-		}
-	}
-	
 	// Query posts from database
-	posts, err := pc.repo.Post.FindAll(filterUserID, limit, offset)
+	posts, err := pc.repo.Post.FindAll(filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
 		return
@@ -358,15 +351,23 @@ func (pc *PostController) GetFeed(c *gin.Context) {
 	
 	userID, _ := uuid.Parse(userIDStr)
 	
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	var filter model.Pagination
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	
 	// Get feed posts (posts from followed users and own posts)
-	posts, err := pc.repo.Post.FindFeed(userID, limit, offset)
+	posts, err := pc.repo.Post.FindFeed(userID, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch feed"})
 		return
+	}
+	
+	// Check if posts are liked by the current user
+	for i := range posts {
+		isLiked, _ := pc.repo.Post.IsLiked(userID, posts[i].ID)
+		posts[i].IsLiked = &isLiked
 	}
 	
 	c.JSON(http.StatusOK, posts)
@@ -388,12 +389,14 @@ func (pc *PostController) GetComments(c *gin.Context) {
 		return
 	}
 	
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	var filter model.Pagination
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	
 	// Get comments for post
-	comments, err := pc.repo.Comment.FindByPostID(postID, limit, offset)
+	comments, err := pc.repo.Comment.FindByPostID(postID, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
 		return

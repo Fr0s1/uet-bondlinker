@@ -27,44 +27,21 @@ func (r *UserRepo) Create(user *model.User) error {
 func (r *UserRepo) FindByID(id uuid.UUID) (*model.User, error) {
 	var user model.User
 	err := r.db.First(&user, "id = ?", id).Error
-	if err != nil {
-		return nil, err
-	}
-	
-	// Count followers and following
-	followers, _ := r.CountFollowers(id)
-	following, _ := r.CountFollowing(id)
-	user.Followers = followers
-	user.Following = following
-	
-	return &user, nil
+	return &user, err
 }
 
 // FindByEmail finds a user by email
 func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
 	var user model.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	return &user, err
 }
 
 // FindByUsername finds a user by username
 func (r *UserRepo) FindByUsername(username string) (*model.User, error) {
 	var user model.User
 	err := r.db.Where("username = ?", username).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	
-	// Count followers and following
-	followers, _ := r.CountFollowers(user.ID)
-	following, _ := r.CountFollowing(user.ID)
-	user.Followers = followers
-	user.Following = following
-	
-	return &user, nil
+	return &user, err
 }
 
 // Update updates a user in the database
@@ -73,42 +50,78 @@ func (r *UserRepo) Update(user *model.User) error {
 }
 
 // FindAll finds all users matching the query with pagination
-func (r *UserRepo) FindAll(query string, limit, offset int) ([]model.User, error) {
+func (r *UserRepo) FindAll(filter model.UserFilter) ([]model.User, error) {
 	var users []model.User
 	db := r.db
 	
-	if query != "" {
-		db = db.Where("name ILIKE ? OR username ILIKE ?", "%"+query+"%", "%"+query+"%")
+	if filter.Query != "" {
+		db = db.Where("name ILIKE ? OR username ILIKE ?", "%"+filter.Query+"%", "%"+filter.Query+"%")
 	}
 	
-	err := db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&users).Error
-	if err != nil {
-		return nil, err
-	}
-	
-	// Count followers and following for each user
-	for i := range users {
-		followers, _ := r.CountFollowers(users[i].ID)
-		following, _ := r.CountFollowing(users[i].ID)
-		users[i].Followers = followers
-		users[i].Following = following
-	}
-	
-	return users, nil
+	err := db.Limit(filter.Limit).Offset(filter.Offset).Order("created_at DESC").Find(&users).Error
+	return users, err
 }
 
-// Follow creates a follow relationship between users
+// Follow creates a follow relationship between users and increments counters
 func (r *UserRepo) Follow(followerID, followingID uuid.UUID) error {
+	// Start a transaction
+	tx := r.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Create follow relationship
 	follow := model.Follow{
 		FollowerID:  followerID,
 		FollowingID: followingID,
 	}
-	return r.db.Create(&follow).Error
+	if err := tx.Create(&follow).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Increment follower's following_count
+	if err := tx.Model(&model.User{}).Where("id = ?", followerID).Update("following_count", gorm.Expr("following_count + 1")).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Increment followed user's followers_count
+	if err := tx.Model(&model.User{}).Where("id = ?", followingID).Update("followers_count", gorm.Expr("followers_count + 1")).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
-// Unfollow removes a follow relationship between users
+// Unfollow removes a follow relationship between users and decrements counters
 func (r *UserRepo) Unfollow(followerID, followingID uuid.UUID) error {
-	return r.db.Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&model.Follow{}).Error
+	// Start a transaction
+	tx := r.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Remove follow relationship
+	if err := tx.Where("follower_id = ? AND following_id = ?", followerID, followingID).Delete(&model.Follow{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Decrement follower's following_count
+	if err := tx.Model(&model.User{}).Where("id = ?", followerID).Update("following_count", gorm.Expr("following_count - 1")).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Decrement followed user's followers_count
+	if err := tx.Model(&model.User{}).Where("id = ?", followingID).Update("followers_count", gorm.Expr("followers_count - 1")).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 // IsFollowing checks if a user is following another user
@@ -119,57 +132,31 @@ func (r *UserRepo) IsFollowing(followerID, followingID uuid.UUID) (bool, error) 
 }
 
 // GetFollowers gets all users who follow the specified user
-func (r *UserRepo) GetFollowers(userID uuid.UUID, limit, offset int) ([]model.User, error) {
+func (r *UserRepo) GetFollowers(userID uuid.UUID, filter model.FollowFilter) ([]model.User, error) {
 	var users []model.User
-	err := r.db.Joins("JOIN follows ON users.id = follows.follower_id").
+	// Use join to avoid N+1 query
+	err := r.db.Select("users.*").
+		Joins("JOIN follows ON users.id = follows.follower_id").
 		Where("follows.following_id = ?", userID).
-		Limit(limit).Offset(offset).Order("follows.created_at DESC").
+		Limit(filter.Limit).Offset(filter.Offset).
+		Order("follows.created_at DESC").
 		Find(&users).Error
 	
-	if err != nil {
-		return nil, err
-	}
-	
-	// Count followers and following for each user
-	for i := range users {
-		followers, _ := r.CountFollowers(users[i].ID)
-		following, _ := r.CountFollowing(users[i].ID)
-		users[i].Followers = followers
-		users[i].Following = following
-		
-		// Mark as followed
-		isFollowed, _ := r.IsFollowing(userID, users[i].ID)
-		users[i].IsFollowed = &isFollowed
-	}
-	
-	return users, nil
+	return users, err
 }
 
 // GetFollowing gets all users the specified user follows
-func (r *UserRepo) GetFollowing(userID uuid.UUID, limit, offset int) ([]model.User, error) {
+func (r *UserRepo) GetFollowing(userID uuid.UUID, filter model.FollowFilter) ([]model.User, error) {
 	var users []model.User
-	err := r.db.Joins("JOIN follows ON users.id = follows.following_id").
+	// Use join to avoid N+1 query
+	err := r.db.Select("users.*").
+		Joins("JOIN follows ON users.id = follows.following_id").
 		Where("follows.follower_id = ?", userID).
-		Limit(limit).Offset(offset).Order("follows.created_at DESC").
+		Limit(filter.Limit).Offset(filter.Offset).
+		Order("follows.created_at DESC").
 		Find(&users).Error
 	
-	if err != nil {
-		return nil, err
-	}
-	
-	// Count followers and following for each user
-	for i := range users {
-		followers, _ := r.CountFollowers(users[i].ID)
-		following, _ := r.CountFollowing(users[i].ID)
-		users[i].Followers = followers
-		users[i].Following = following
-		
-		// Mark as followed (all are followed)
-		isFollowed := true
-		users[i].IsFollowed = &isFollowed
-	}
-	
-	return users, nil
+	return users, err
 }
 
 // CountFollowers counts the number of followers for a user

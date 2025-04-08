@@ -1,9 +1,7 @@
-
 package controller
 
 import (
 	"net/http"
-	"strconv"
 
 	"socialnet/config"
 	"socialnet/middleware"
@@ -30,6 +28,12 @@ func NewUserController(repo *repository.Repository, cfg *config.Config) *UserCon
 
 // GetUsers returns a list of users
 func (uc *UserController) GetUsers(c *gin.Context) {
+	var filter model.UserFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
 	var currentUserID *uuid.UUID
 	
 	// Check if user is authenticated
@@ -38,13 +42,8 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 		currentUserID = &userID
 	}
 
-	// Parse query parameters
-	query := c.DefaultQuery("q", "")
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-
 	// Query users from database
-	users, err := uc.repo.User.FindAll(query, limit, offset)
+	users, err := uc.repo.User.FindAll(filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
@@ -304,49 +303,73 @@ func (uc *UserController) UnfollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully unfollowed user"})
 }
 
-// GetFollowers returns users who follow the authenticated user
+// GetFollowers returns users who follow the specified user
 func (uc *UserController) GetFollowers(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 	
-	userID, _ := uuid.Parse(userIDStr)
-	
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	var filter model.FollowFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	
 	// Query followers from database
-	followers, err := uc.repo.User.GetFollowers(userID, limit, offset)
+	followers, err := uc.repo.User.GetFollowers(userID, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch followers"})
 		return
 	}
 	
+	// Check if the requesting user is authenticated
+	if currentUserIDStr, err := middleware.GetUserID(c); err == nil {
+		currentUserID, _ := uuid.Parse(currentUserIDStr)
+		
+		// Mark which users the current user is following
+		for i := range followers {
+			isFollowed, _ := uc.repo.User.IsFollowing(currentUserID, followers[i].ID)
+			followers[i].IsFollowed = &isFollowed
+		}
+	}
+	
 	c.JSON(http.StatusOK, followers)
 }
 
-// GetFollowing returns users that the authenticated user follows
+// GetFollowing returns users that the specified user follows
 func (uc *UserController) GetFollowing(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 	
-	userID, _ := uuid.Parse(userIDStr)
-	
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	var filter model.FollowFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	
 	// Query following from database
-	following, err := uc.repo.User.GetFollowing(userID, limit, offset)
+	following, err := uc.repo.User.GetFollowing(userID, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch following"})
 		return
+	}
+	
+	// Check if the requesting user is authenticated
+	if currentUserIDStr, err := middleware.GetUserID(c); err == nil {
+		currentUserID, _ := uuid.Parse(currentUserIDStr)
+		
+		// Mark which users the current user is following
+		for i := range following {
+			isFollowed, _ := uc.repo.User.IsFollowing(currentUserID, following[i].ID)
+			following[i].IsFollowed = &isFollowed
+		}
 	}
 	
 	c.JSON(http.StatusOK, following)

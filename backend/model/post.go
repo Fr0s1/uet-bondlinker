@@ -1,4 +1,3 @@
-
 package model
 
 import (
@@ -10,22 +9,20 @@ import (
 
 // Post represents a post in the system
 type Post struct {
-	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID    uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
-	Content   string         `json:"content" gorm:"type:text;not null"`
-	Image     *string        `json:"image,omitempty" gorm:"size:255"`
-	CreatedAt time.Time      `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
-	
-	// Calculated fields
-	Likes    int   `json:"likes" gorm:"-"`
-	Comments int   `json:"comments" gorm:"-"`
-	IsLiked  *bool `json:"is_liked,omitempty" gorm:"-"`
+	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID        uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
+	Content       string         `json:"content" gorm:"type:text;not null"`
+	Image         *string        `json:"image,omitempty" gorm:"size:255"`
+	LikesCount    int            `json:"likes" gorm:"default:0"`
+	CommentsCount int            `json:"comments" gorm:"default:0"`
+	CreatedAt     time.Time      `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt     time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
+	IsLiked       *bool          `json:"is_liked,omitempty" gorm:"-"`
 	
 	// Relations
-	Author    *User     `json:"author,omitempty" gorm:"foreignKey:UserID"`
-	LikesList []Like    `json:"-" gorm:"foreignKey:PostID"`
+	Author       *User     `json:"author,omitempty" gorm:"foreignKey:UserID"`
+	LikesList    []Like    `json:"-" gorm:"foreignKey:PostID"`
 	CommentsList []Comment `json:"-" gorm:"foreignKey:PostID"`
 }
 
@@ -34,6 +31,13 @@ func (p *Post) BeforeCreate(tx *gorm.DB) error {
 	if p.ID == uuid.Nil {
 		p.ID = uuid.New()
 	}
+	
+	// Increment user's post count on creation
+	err := tx.Model(&User{}).Where("id = ?", p.UserID).Update("posts_count", gorm.Expr("posts_count + 1")).Error
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
