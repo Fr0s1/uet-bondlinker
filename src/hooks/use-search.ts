@@ -19,6 +19,8 @@ export const useSearch = (query: string, limit = 10) => {
     queryKey: ["search", debouncedQuery, page, limit],
     queryFn: () => api.get<SearchResults>(`/search?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
+    staleTime: 60000, // 1 minute
+    keepPreviousData: true, // Keep old data while fetching new
   });
   
   return {
@@ -38,6 +40,8 @@ export const useSearchUsers = (query: string, limit = 10) => {
     queryKey: ["search", "users", debouncedQuery, page, limit],
     queryFn: () => api.get<User[]>(`/search/users?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
+    staleTime: 60000,
+    keepPreviousData: true,
   });
   
   return {
@@ -57,6 +61,8 @@ export const useSearchPosts = (query: string, limit = 10) => {
     queryKey: ["search", "posts", debouncedQuery, page, limit],
     queryFn: () => api.get<Post[]>(`/search/posts?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
+    staleTime: 60000,
+    keepPreviousData: true,
   });
   
   return {

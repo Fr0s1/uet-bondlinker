@@ -64,11 +64,12 @@ const Navbar = () => {
               placeholder="Search for people or posts..."
               value={searchQuery}
               onValueChange={setSearchQuery}
+              autoFocus
             />
           </form>
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            {results.users.length > 0 && (
+            {results.users && results.users.length > 0 && (
               <CommandGroup heading="People">
                 {results.users.slice(0, 4).map((user) => (
                   <CommandItem
@@ -98,7 +99,7 @@ const Navbar = () => {
                 )}
               </CommandGroup>
             )}
-            {results.posts.length > 0 && (
+            {results.posts && results.posts.length > 0 && (
               <CommandGroup heading="Posts">
                 {results.posts.slice(0, 4).map((post) => (
                   <CommandItem

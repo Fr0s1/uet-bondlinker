@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -155,10 +156,12 @@ const Post = ({
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['trending'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
       toast({
         title: "Post deleted",
         description: "Your post has been deleted successfully!",
       });
+      // Ensure the dialog is closed properly
       setDeleteDialogOpen(false);
     },
     onError: () => {
@@ -278,9 +281,11 @@ const Post = ({
 
         <div className="mt-3 text-left">
           <div className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {content}
-            </ReactMarkdown>
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
 
@@ -297,10 +302,12 @@ const Post = ({
               </div>
             </div>
             <div className="mt-2">
-              <div className="text-gray-800 text-sm prose prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {sharedPost.content}
-                </ReactMarkdown>
+              <div className="text-gray-800 text-sm">
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {sharedPost.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
             {sharedPost.image && (

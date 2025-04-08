@@ -54,6 +54,32 @@ func (r *PostRepo) Delete(id uuid.UUID) error {
     return err
   }
 
+  // If this was a shared post, decrement the original post's shares count
+  if post.SharedPostID != nil {
+    if err := tx.Model(&model.Post{}).Where("id = ?", post.SharedPostID).Update("shares_count", gorm.Expr("shares_count - 1")).Error; err != nil {
+      tx.Rollback()
+      return err
+    }
+  }
+
+  // Find any posts that shared this one
+  var sharingPosts []model.Post
+  if err := tx.Where("shared_post_id = ?", id).Find(&sharingPosts).Error; err != nil {
+    tx.Rollback()
+    return err
+  }
+
+  // Update sharing posts to mark the shared post as deleted or handle as needed
+  for _, sharingPost := range sharingPosts {
+    // Option: You could set the shared_post_id to NULL to break the reference
+    // or you could add a flag indicating the original post was deleted
+    // Here we'll set shared_post_id to NULL
+    if err := tx.Model(&model.Post{}).Where("id = ?", sharingPost.ID).Update("shared_post_id", nil).Error; err != nil {
+      tx.Rollback()
+      return err
+    }
+  }
+
   // Delete post
   if err := tx.Delete(&model.Post{}, "id = ?", id).Error; err != nil {
     tx.Rollback()
@@ -72,7 +98,12 @@ func (r *PostRepo) Delete(id uuid.UUID) error {
 // FindAll finds all posts with pagination and author preloaded
 func (r *PostRepo) FindAll(filter model.PostFilter) ([]model.Post, error) {
   var posts []model.Post
-  query := r.db.Preload("Author").Order("created_at DESC").Limit(filter.Limit).Offset(filter.Offset)
+  query := r.db.Preload("Author").
+    Preload("SharedPost").
+    Preload("SharedPost.Author").
+    Order("created_at DESC").
+    Limit(filter.Limit).
+    Offset(filter.Offset)
 
   // Filter by user if userID is provided
   if filter.UserID != "" {
@@ -92,6 +123,8 @@ func (r *PostRepo) FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.
 
   // Get posts from followed users and own posts using a single join
   err := r.db.Preload("Author").
+    Preload("SharedPost").
+    Preload("SharedPost.Author").
     Distinct("posts.*").
     Table("posts").
     Joins("LEFT JOIN follows ON posts.user_id = follows.following_id AND follows.follower_id = ?", userID).
@@ -109,6 +142,8 @@ func (r *PostRepo) FindTrending(filter model.Pagination) ([]model.Post, error) {
 
   // Get posts ordered by engagement (likes + comments)
   err := r.db.Preload("Author").
+    Preload("SharedPost").
+    Preload("SharedPost.Author").
     Order("(likes_count + comments_count) DESC, created_at DESC").
     Limit(filter.Limit).Offset(filter.Offset).
     Find(&posts).Error
@@ -122,6 +157,8 @@ func (r *PostRepo) SearchPosts(query string, filter model.Pagination) ([]model.P
 
   // Search posts by content using ILIKE for case-insensitive search
   err := r.db.Preload("Author").
+    Preload("SharedPost").
+    Preload("SharedPost.Author").
     Where("content ILIKE ?", "%"+query+"%").
     Order("created_at DESC").
     Limit(filter.Limit).Offset(filter.Offset).
@@ -286,6 +323,8 @@ func (r *PostRepo) GetSuggestedPosts(userID uuid.UUID, filter model.Pagination) 
   // Get posts from users that are followed by users that the current user follows
   // This is a "friends of friends" approach
   err := r.db.Preload("Author").
+    Preload("SharedPost").
+    Preload("SharedPost.Author").
     Distinct("posts.*").
     Table("posts").
     Joins("JOIN users u ON posts.user_id = u.id").
