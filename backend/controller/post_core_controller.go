@@ -1,3 +1,4 @@
+
 package controller
 
 import (
@@ -255,6 +256,72 @@ func (pc *PostController) GetFeed(c *gin.Context) {
 	posts, err := pc.repo.Post.FindFeed(userID, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch feed"})
+		return
+	}
+
+	// Check if posts are liked by the current user
+	for i := range posts {
+		isLiked, _ := pc.repo.Post.IsLiked(userID, posts[i].ID)
+		posts[i].IsLiked = &isLiked
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+// GetTrending returns trending posts based on engagement
+func (pc *PostController) GetTrending(c *gin.Context) {
+	var filter model.Pagination
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var currentUserID *uuid.UUID
+
+	// Check if user is authenticated
+	if userIDStr, err := middleware.GetUserID(c); err == nil {
+		userID, _ := uuid.Parse(userIDStr)
+		currentUserID = &userID
+	}
+
+	// Get trending posts
+	posts, err := pc.repo.Post.FindTrending(filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
+		return
+	}
+
+	// If user is authenticated, check if posts are liked
+	if currentUserID != nil {
+		for i := range posts {
+			isLiked, _ := pc.repo.Post.IsLiked(*currentUserID, posts[i].ID)
+			posts[i].IsLiked = &isLiked
+		}
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+// GetSuggestedPosts returns posts that might interest the user
+func (pc *PostController) GetSuggestedPosts(c *gin.Context) {
+	userIDStr, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	userID, _ := uuid.Parse(userIDStr)
+
+	var filter model.Pagination
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get suggested posts
+	posts, err := pc.repo.Post.GetSuggestedPosts(userID, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch suggested posts"})
 		return
 	}
 

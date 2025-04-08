@@ -1,3 +1,4 @@
+
 package model
 
 import (
@@ -15,6 +16,8 @@ type Post struct {
   Image         *string        `json:"image,omitempty" gorm:"size:255"`
   LikesCount    int            `json:"likes" gorm:"default:0"`
   CommentsCount int            `json:"comments" gorm:"default:0"`
+  SharesCount   int            `json:"shares" gorm:"default:0"`
+  SharedPostID  *uuid.UUID     `json:"shared_post_id,omitempty" gorm:"type:uuid"`
   CreatedAt     time.Time      `json:"created_at" gorm:"autoCreateTime"`
   UpdatedAt     time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
   DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
@@ -24,6 +27,7 @@ type Post struct {
   Author       *User     `json:"author,omitempty" gorm:"foreignKey:UserID"`
   LikesList    []Like    `json:"-" gorm:"foreignKey:PostID"`
   CommentsList []Comment `json:"-" gorm:"foreignKey:PostID"`
+  SharedPost   *Post     `json:"shared_post,omitempty" gorm:"foreignKey:SharedPostID"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.
@@ -51,6 +55,11 @@ type PostCreate struct {
 type PostUpdate struct {
   Content string  `json:"content" binding:"required"`
   Image   *string `json:"image,omitempty"`
+}
+
+// PostShare represents data needed to share a post
+type PostShare struct {
+  Content string `json:"content"`
 }
 
 // Comment represents a comment on a post

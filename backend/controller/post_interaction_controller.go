@@ -1,3 +1,4 @@
+
 package controller
 
 import (
@@ -5,13 +6,14 @@ import (
 
 	"socialnet/config"
 	"socialnet/middleware"
+	"socialnet/model"
 	"socialnet/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-// PostInteractionController handles post interaction-related requests (likes)
+// PostInteractionController handles post interaction-related requests (likes, shares)
 type PostInteractionController struct {
 	repo *repository.Repository
 	cfg  *config.Config
@@ -127,5 +129,48 @@ func (pic *PostInteractionController) UnlikePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Post unliked successfully",
 		"likes":   likeCount,
+	})
+}
+
+// SharePost shares an existing post
+func (pic *PostInteractionController) SharePost(c *gin.Context) {
+	postIDStr := c.Param("id")
+	postID, err := uuid.Parse(postIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
+	userIDStr, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	userID, _ := uuid.Parse(userIDStr)
+
+	// Check if post exists
+	_, err = pic.repo.Post.FindByID(postID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	var input model.PostShare
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Share the post
+	sharedPost, err := pic.repo.Post.Share(userID, postID, input.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to share post"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Post shared successfully",
+		"post":    sharedPost,
 	})
 }

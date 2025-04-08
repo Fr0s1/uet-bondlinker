@@ -20,12 +20,19 @@ export interface Post {
   updated_at: string;
   likes: number;
   comments: number;
+  shares: number;
   is_liked?: boolean;
+  shared_post_id?: string;
+  shared_post?: Post;
 }
 
 export interface CreatePostData {
   content: string;
   image?: string;
+}
+
+export interface SharePostData {
+  content: string;
 }
 
 export const usePosts = (userId?: string, limit = 10) => {
@@ -67,6 +74,7 @@ export const usePosts = (userId?: string, limit = 10) => {
     onSuccess: (data, postId) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["trending"] });
     },
   });
   
@@ -75,6 +83,20 @@ export const usePosts = (userId?: string, limit = 10) => {
     onSuccess: (data, postId) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["trending"] });
+    },
+  });
+  
+  const sharePost = useMutation<Post, Error, { postId: string, content: string }>({
+    mutationFn: ({ postId, content }) => api.post<Post>(`/posts/${postId}/share`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["trending"] });
+      toast({
+        title: "Post shared",
+        description: "The post has been shared successfully!",
+      });
     },
   });
   
@@ -83,6 +105,7 @@ export const usePosts = (userId?: string, limit = 10) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["trending"] });
       toast({
         title: "Post deleted",
         description: "Your post has been deleted successfully!",
@@ -99,6 +122,7 @@ export const usePosts = (userId?: string, limit = 10) => {
     createPost,
     likePost,
     unlikePost,
+    sharePost,
     deletePost,
   };
 };
@@ -110,6 +134,42 @@ export const useFeed = (limit = 10) => {
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["feed", page, limit],
     queryFn: () => api.get<Post[]>(`/posts/feed?limit=${limit}&offset=${offset}`),
+  });
+  
+  return {
+    posts: data || [],
+    isLoading,
+    error,
+    page,
+    setPage,
+  };
+};
+
+export const useTrendingPosts = (limit = 10) => {
+  const [page, setPage] = useState(1);
+  const offset = (page - 1) * limit;
+  
+  const { data, isLoading, error } = useQuery<Post[]>({
+    queryKey: ["trending", page, limit],
+    queryFn: () => api.get<Post[]>(`/posts/trending?limit=${limit}&offset=${offset}`),
+  });
+  
+  return {
+    posts: data || [],
+    isLoading,
+    error,
+    page,
+    setPage,
+  };
+};
+
+export const useSuggestedPosts = (limit = 10) => {
+  const [page, setPage] = useState(1);
+  const offset = (page - 1) * limit;
+  
+  const { data, isLoading, error } = useQuery<Post[]>({
+    queryKey: ["suggested", page, limit],
+    queryFn: () => api.get<Post[]>(`/posts/suggested?limit=${limit}&offset=${offset}`),
   });
   
   return {

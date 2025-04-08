@@ -1,3 +1,4 @@
+
 package router
 
 import (
@@ -24,7 +25,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 	// Configure CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -39,10 +40,13 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	userController := controller.NewUserController(repo, cfg)
 	authController := controller.NewAuthController(repo, cfg)
 
-	// Initialize new separated post controllers
+	// Initialize post controllers
 	postController := controller.NewPostController(repo, cfg)
 	postInteractionController := controller.NewPostInteractionController(repo, cfg)
 	commentController := controller.NewCommentController(repo, cfg)
+	
+	// Initialize search controller
+	searchController := controller.NewSearchController(repo, cfg)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -83,6 +87,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		{
 			posts.GET("", postController.GetPosts)
 			posts.GET("/:id", postController.GetPost)
+			posts.GET("/trending", postController.GetTrending)
 
 			// Protected routes
 			posts.Use(middleware.AuthMiddleware(cfg))
@@ -91,13 +96,23 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			posts.DELETE("/:id", postController.DeletePost)
 			posts.POST("/:id/like", postInteractionController.LikePost)
 			posts.DELETE("/:id/like", postInteractionController.UnlikePost)
+			posts.POST("/:id/share", postInteractionController.SharePost)
 			posts.GET("/feed", postController.GetFeed)
+			posts.GET("/suggested", postController.GetSuggestedPosts)
 
 			// Comment routes (nested under posts)
 			posts.GET("/:id/comments", commentController.GetComments)
 			posts.POST("/:id/comments", commentController.CreateComment)
 			posts.PUT("/comments/:commentId", commentController.UpdateComment)
 			posts.DELETE("/comments/:commentId", commentController.DeleteComment)
+		}
+
+		// Search routes
+		search := v1.Group("/search")
+		{
+			search.GET("", searchController.Search)
+			search.GET("/users", searchController.SearchUsers)
+			search.GET("/posts", searchController.SearchPosts)
 		}
 	}
 

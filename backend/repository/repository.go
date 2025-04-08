@@ -1,3 +1,4 @@
+
 package repository
 
 import (
@@ -22,6 +23,8 @@ type UserRepository interface {
 	GetFollowing(userID uuid.UUID, filter model.FollowFilter) ([]model.User, error)
 	CountFollowers(userID uuid.UUID) (int, error)
 	CountFollowing(userID uuid.UUID) (int, error)
+	SearchUsers(query string, filter model.Pagination) ([]model.User, error)
+	GetSuggestedUsers(userID uuid.UUID, filter model.Pagination) ([]model.User, error)
 }
 
 // PostRepository handles database operations related to posts
@@ -32,10 +35,14 @@ type PostRepository interface {
 	Delete(id uuid.UUID) error
 	FindAll(filter model.PostFilter) ([]model.Post, error)
 	FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.Post, error)
+	FindTrending(filter model.Pagination) ([]model.Post, error)
+	SearchPosts(query string, filter model.Pagination) ([]model.Post, error)
 	Like(userID, postID uuid.UUID) error
 	Unlike(userID, postID uuid.UUID) error
 	IsLiked(userID, postID uuid.UUID) (bool, error)
 	CountLikes(postID uuid.UUID) (int, error)
+	Share(userID, postID uuid.UUID, content string) (*model.Post, error)
+	GetSuggestedPosts(userID uuid.UUID, filter model.Pagination) ([]model.Post, error)
 }
 
 // CommentRepository handles database operations related to comments

@@ -1,3 +1,4 @@
+
 package model
 
 // Pagination represents common pagination parameters
@@ -15,6 +16,7 @@ type UserFilter struct {
 // PostFilter represents post filtering parameters
 type PostFilter struct {
 	UserID string `form:"user_id"`
+	Query  string `form:"q"`
 	Pagination
 }
 
@@ -26,5 +28,11 @@ type CommentFilter struct {
 
 // FollowFilter represents follow relationship filtering parameters
 type FollowFilter struct {
+	Pagination
+}
+
+// SearchFilter represents search filtering parameters
+type SearchFilter struct {
+	Query string `form:"q" binding:"required"`
 	Pagination
 }
