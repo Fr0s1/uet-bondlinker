@@ -69,7 +69,7 @@ const Navbar = () => {
           </form>
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            {results.users && results.users.length > 0 && (
+            {results.users.length > 0 && (
               <CommandGroup heading="People">
                 {results.users.slice(0, 4).map((user) => (
                   <CommandItem
@@ -99,7 +99,7 @@ const Navbar = () => {
                 )}
               </CommandGroup>
             )}
-            {results.posts && results.posts.length > 0 && (
+            {results.posts.length > 0 && (
               <CommandGroup heading="Posts">
                 {results.posts.slice(0, 4).map((post) => (
                   <CommandItem

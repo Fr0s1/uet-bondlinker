@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, Link as LinkIcon, Upload } from 'lucide-react';
+import { MapPin, Calendar, Link as LinkIcon, Upload, UserPlus, UserCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
+import { useFollowUser, useUnfollowUser } from '@/hooks/use-users';
 
 interface UserProfileProps {
   user: {
@@ -43,13 +44,25 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   
+  const followMutation = useFollowUser();
+  const unfollowMutation = useUnfollowUser();
+  
   const handleFollowToggle = () => {
     if (isFollowing) {
-      setFollowerCount(prev => prev - 1);
+      unfollowMutation.mutate(user.id, {
+        onSuccess: () => {
+          setIsFollowing(false);
+          setFollowerCount(prev => prev - 1);
+        }
+      });
     } else {
-      setFollowerCount(prev => prev + 1);
+      followMutation.mutate(user.id, {
+        onSuccess: () => {
+          setIsFollowing(true);
+          setFollowerCount(prev => prev + 1);
+        }
+      });
     }
-    setIsFollowing(!isFollowing);
   };
   
   const updateProfileMutation = useMutation({
@@ -172,19 +185,30 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
               variant={isFollowing ? "outline" : "default"} 
               className={isFollowing ? "mb-2" : "mb-2 gradient-blue"}
               onClick={handleFollowToggle}
+              disabled={followMutation.isPending || unfollowMutation.isPending}
             >
-              {isFollowing ? 'Following' : 'Follow'}
+              {isFollowing ? (
+                <>
+                  <UserCheck className="h-4 w-4 mr-1" />
+                  Following
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Follow
+                </>
+              )}
             </Button>
           )}
         </div>
         
         <div>
-          <h2 className="text-xl font-bold">{user.name}</h2>
-          <p className="text-gray-500">@{user.username}</p>
+          <h2 className="text-xl font-bold text-left">{user.name}</h2>
+          <p className="text-gray-500 text-left">@{user.username}</p>
           
-          <p className="my-3">{user.bio}</p>
+          <p className="my-3 text-left">{user.bio}</p>
           
-          <div className="flex flex-wrap text-sm text-gray-500 space-x-4 mb-3">
+          <div className="flex flex-wrap text-sm text-gray-500 space-x-4 mb-3 text-left">
             {user.location && (
               <div className="flex items-center">
                 <MapPin className="h-4 w-4 mr-1" />
@@ -207,7 +231,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
             </div>
           </div>
           
-          <div className="flex space-x-5 text-sm">
+          <div className="flex space-x-5 text-sm text-left">
             <Link to="#" className="hover:underline">
               <span className="font-semibold">{user.following}</span> Following
             </Link>

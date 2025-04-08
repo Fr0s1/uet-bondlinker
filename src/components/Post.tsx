@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,7 @@ const Post = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
 
   const likePostMutation = useMutation({
     mutationFn: () => api.post(`/posts/${id}/like`),
@@ -153,18 +154,24 @@ const Post = ({
   const deletePostMutation = useMutation({
     mutationFn: () => api.delete(`/posts/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
-      queryClient.invalidateQueries({ queryKey: ['trending'] });
-      queryClient.invalidateQueries({ queryKey: ['search'] });
-      toast({
-        title: "Post deleted",
-        description: "Your post has been deleted successfully!",
-      });
-      // Ensure the dialog is closed properly
+      // Close the dialog first, then invalidate queries
       setDeleteDialogOpen(false);
+      
+      // Use setTimeout to ensure the dialog is fully closed before invalidating queries
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['trending'] });
+        queryClient.invalidateQueries({ queryKey: ['search'] });
+        
+        toast({
+          title: "Post deleted",
+          description: "Your post has been deleted successfully!",
+        });
+      }, 100);
     },
     onError: () => {
+      setDeleteDialogOpen(false);
       toast({
         title: "Error",
         description: "Failed to delete the post. Please try again.",
@@ -266,11 +273,9 @@ const Post = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {isAuthor && (
-                <>
-                  <DropdownMenuItem className="text-red-500" onClick={handleDeletePost}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Delete Post
-                  </DropdownMenuItem>
-                </>
+                <DropdownMenuItem className="text-red-500" onClick={handleDeletePost}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete Post
+                </DropdownMenuItem>
               )}
               <DropdownMenuItem>Save Post</DropdownMenuItem>
               <DropdownMenuItem>Hide Post</DropdownMenuItem>
@@ -301,7 +306,7 @@ const Post = ({
                 <span className="text-xs text-gray-500 ml-1">@{sharedPost.author.username} · {formatDate(sharedPost.createdAt)}</span>
               </div>
             </div>
-            <div className="mt-2">
+            <div className="mt-2 text-left">
               <div className="text-gray-800 text-sm">
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -407,7 +412,7 @@ const Post = ({
                 </Avatar>
                 <span className="text-sm font-medium">{author.name}</span>
               </div>
-              <div className="text-sm mt-2 line-clamp-2">
+              <div className="text-sm mt-2 line-clamp-2 text-left">
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {content}
@@ -432,7 +437,7 @@ const Post = ({
       </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent ref={deleteDialogRef}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this post?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -443,7 +448,11 @@ const Post = ({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500 hover:bg-red-600"
-              onClick={confirmDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+                return false;
+              }}
               disabled={deletePostMutation.isPending}
             >
               {deletePostMutation.isPending ? "Deleting..." : "Delete"}
