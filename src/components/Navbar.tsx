@@ -5,8 +5,11 @@ import { Bell, Home, MessageSquare, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
+  const { user } = useAuth();
+  
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm py-3">
       <div className="container flex items-center justify-between">
@@ -38,12 +41,12 @@ const Navbar = () => {
             <Link to="/notifications"><Bell className="h-5 w-5" /></Link>
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-600 hidden sm:flex" asChild>
-            <Link to="/profile"><User className="h-5 w-5" /></Link>
+            <Link to={user ? `/profile/${user.username}` : "/login"}><User className="h-5 w-5" /></Link>
           </Button>
-          <Link to="/profile" className="ml-2">
+          <Link to={user ? `/profile/${user.username}` : "/login"} className="ml-2">
             <Avatar className="h-8 w-8 avatar-shadow">
-              <AvatarImage src="/placeholder.svg" alt="Profile" />
-              <AvatarFallback>US</AvatarFallback>
+              <AvatarImage src={user?.avatar || "/placeholder.svg"} alt="Profile" />
+              <AvatarFallback>{user ? user.name.substring(0, 2).toUpperCase() : "US"}</AvatarFallback>
             </Avatar>
           </Link>
         </div>
