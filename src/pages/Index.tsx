@@ -1,5 +1,5 @@
+
 import React from 'react';
-import Navbar from '@/components/Navbar';
 import PostForm from '@/components/PostForm';
 import Feed from '@/components/Feed';
 import UserProfile from '@/components/UserProfile';
@@ -44,8 +44,6 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="container py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <aside className="hidden lg:block lg:col-span-3">

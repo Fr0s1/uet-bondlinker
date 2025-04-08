@@ -36,18 +36,39 @@ function App() {
             <Navbar />
             <main className="flex-1 container mx-auto py-4">
               <Routes>
-                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/trending" element={<Trending />} />
+                
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile/:username" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/search" element={
+                  <ProtectedRoute>
+                    <Search />
+                  </ProtectedRoute>
+                } />
+                <Route path="/trending" element={
+                  <ProtectedRoute>
+                    <Trending />
+                  </ProtectedRoute>
+                } />
                 <Route path="/messages" element={
                   <ProtectedRoute>
                     <Messages />
                   </ProtectedRoute>
                 } />
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={
+                  <ProtectedRoute>
+                    <NotFound />
+                  </ProtectedRoute>
+                } />
               </Routes>
             </main>
           </div>
