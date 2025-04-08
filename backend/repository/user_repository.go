@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -27,7 +26,7 @@ func (r *UserRepo) Create(user *model.User) error {
 // FindByID finds a user by ID
 func (r *UserRepo) FindByID(id uuid.UUID) (*model.User, error) {
 	var user model.User
-	err := r.db.Where("id = ?", id).Scan(&user).Error
+	err := r.db.First(&user, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +36,7 @@ func (r *UserRepo) FindByID(id uuid.UUID) (*model.User, error) {
 // FindByEmail finds a user by email
 func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
 	var user model.User
-	err := r.db.Where("email = ?", email).Scan(&user).Error
+	err := r.db.First(&user, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +46,7 @@ func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
 // FindByUsername finds a user by username
 func (r *UserRepo) FindByUsername(username string) (*model.User, error) {
 	var user model.User
-	err := r.db.Where("username = ?", username).Scan(&user).Error
+	err := r.db.First(&user, "username = ?", username).Error
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func (r *UserRepo) FindAll(filter model.UserFilter) ([]model.User, error) {
 		query = query.Where("name ILIKE ? OR username ILIKE ?", "%"+filter.Query+"%", "%"+filter.Query+"%")
 	}
 
-	err := query.Scan(&users).Error
+	err := query.Find(&users).Error
 	return users, err
 }
 
@@ -154,7 +153,7 @@ func (r *UserRepo) GetFollowers(userID uuid.UUID, filter model.FollowFilter) ([]
 		Joins("JOIN follows ON users.id = follows.follower_id").
 		Where("follows.following_id = ?", userID).
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&users).Error
+		Find(&users).Error
 	return users, err
 }
 
@@ -165,14 +164,14 @@ func (r *UserRepo) GetFollowing(userID uuid.UUID, filter model.FollowFilter) ([]
 		Joins("JOIN follows ON users.id = follows.following_id").
 		Where("follows.follower_id = ?", userID).
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&users).Error
+		Find(&users).Error
 	return users, err
 }
 
 // CountFollowers returns the number of followers for a user
 func (r *UserRepo) CountFollowers(userID uuid.UUID) (int, error) {
 	var user model.User
-	if err := r.db.Select("followers_count").Where("id = ?", userID).Scan(&user).Error; err != nil {
+	if err := r.db.Select("followers_count").First(&user, "id = ?", userID).Error; err != nil {
 		return 0, err
 	}
 	return user.FollowersCount, nil
@@ -181,7 +180,7 @@ func (r *UserRepo) CountFollowers(userID uuid.UUID) (int, error) {
 // CountFollowing returns the number of users that a user follows
 func (r *UserRepo) CountFollowing(userID uuid.UUID) (int, error) {
 	var user model.User
-	if err := r.db.Select("following_count").Where("id = ?", userID).Scan(&user).Error; err != nil {
+	if err := r.db.Select("following_count").First(&user, "id = ?", userID).Error; err != nil {
 		return 0, err
 	}
 	return user.FollowingCount, nil
@@ -192,7 +191,7 @@ func (r *UserRepo) SearchUsers(query string, filter model.Pagination) ([]model.U
 	var users []model.User
 	err := r.db.Where("name ILIKE ? OR username ILIKE ?", "%"+query+"%", "%"+query+"%").
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&users).Error
+		Find(&users).Error
 	return users, err
 }
 
@@ -209,7 +208,7 @@ func (r *UserRepo) GetSuggestedUsers(userID uuid.UUID, filter model.Pagination) 
 		Where("users.id != ?", userID).
 		Where("NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = ? AND following_id = users.id)", userID).
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&users).Error
+		Find(&users).Error
 
 	return users, err
 }

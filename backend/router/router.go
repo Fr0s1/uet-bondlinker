@@ -74,6 +74,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// Protected routes
 			users.Use(middleware.AuthMiddleware(cfg))
+			users.GET("/suggested", userController.GetSuggestedUsers)  // New endpoint for suggested users
 			users.PUT("/:id", userController.UpdateUser)
 			users.GET("/me", userController.GetCurrentUser)
 			users.POST("/follow/:id", userController.FollowUser)

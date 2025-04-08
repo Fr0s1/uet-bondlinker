@@ -23,18 +23,18 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
   
   if (isLoading && page === 1) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-social-blue" />
-        <span className="ml-2 text-gray-500">Loading posts...</span>
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading posts...</span>
       </div>
     );
   }
   
   if (posts.length === 0 && !isLoading) {
     return (
-      <div className="bg-white rounded-xl p-8 text-center card-shadow my-4">
-        <h3 className="text-lg font-medium text-gray-700">No posts yet</h3>
-        <p className="text-gray-500 mt-2">
+      <div className="bg-card rounded-xl p-6 text-center shadow-sm my-4">
+        <h3 className="text-lg font-medium">No posts yet</h3>
+        <p className="text-muted-foreground mt-2">
           {type === 'personal' 
             ? "Follow users to see their posts in your feed!"
             : "Be the first to create a post!"}

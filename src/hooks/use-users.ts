@@ -30,6 +30,7 @@ export const useFollowUser = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
       
       toast({
         title: "Success",
@@ -49,6 +50,7 @@ export const useUnfollowUser = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
       
       toast({
         title: "Success",
@@ -69,5 +71,12 @@ export const useFollowing = (limit = 10) => {
   return useQuery<User[]>({
     queryKey: ["following", limit],
     queryFn: () => api.get<User[]>(`/users/following?limit=${limit}`),
+  });
+};
+
+export const useSuggestedUsers = (limit = 10) => {
+  return useQuery<User[]>({
+    queryKey: ["suggestedUsers", limit],
+    queryFn: () => api.get<User[]>(`/users/suggested?limit=${limit}`),
   });
 };

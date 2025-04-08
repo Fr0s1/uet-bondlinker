@@ -24,9 +24,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="app-container">
       {!isAuthPage && <Navbar />}
-      <main className="flex-1 container mx-auto py-4">
+      <main>
         {children}
       </main>
     </div>

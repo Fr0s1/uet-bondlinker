@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -26,8 +25,7 @@ func (r *PostRepo) Create(post *model.Post) error {
 // FindByID finds a post by ID with author preloaded
 func (r *PostRepo) FindByID(id uuid.UUID) (*model.Post, error) {
 	var post model.Post
-	// Use Scan with pointer instead of First with empty model
-	err := r.db.Preload("Author").Where("id = ?", id).Scan(&post).Error
+	err := r.db.Preload("Author").First(&post, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,7 @@ func (r *PostRepo) Delete(id uuid.UUID) error {
 
 	// Get post to get user ID for counter update
 	var post model.Post
-	if err := tx.Where("id = ?", id).Scan(&post).Error; err != nil {
+	if err := tx.First(&post, "id = ?", id).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -83,7 +81,7 @@ func (r *PostRepo) FindAll(filter model.PostFilter) ([]model.Post, error) {
 		}
 	}
 
-	err := query.Scan(&posts).Error
+	err := query.Find(&posts).Error
 	return posts, err
 }
 
@@ -274,7 +272,7 @@ func (r *PostRepo) GetSuggestedPosts(userID uuid.UUID, filter model.Pagination) 
 		Where("NOT EXISTS (SELECT 1 FROM follows WHERE follower_id = ? AND following_id = posts.user_id)", userID).
 		Order("posts.created_at DESC").
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&posts).Error
+		Find(&posts).Error
 
 	// If no posts found through network connections, return trending posts
 	if len(posts) == 0 {

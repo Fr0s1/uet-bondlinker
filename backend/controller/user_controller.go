@@ -1,3 +1,4 @@
+
 package controller
 
 import (
@@ -373,4 +374,36 @@ func (uc *UserController) GetFollowing(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, following)
+}
+
+// GetSuggestedUsers returns users that might interest the user
+func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
+	userIDStr, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	userID, _ := uuid.Parse(userIDStr)
+
+	var filter model.Pagination
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get suggested users
+	suggestedUsers, err := uc.repo.User.GetSuggestedUsers(userID, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch suggested users"})
+		return
+	}
+
+	// Mark which users the current user is following
+	for i := range suggestedUsers {
+		isFollowed, _ := uc.repo.User.IsFollowing(userID, suggestedUsers[i].ID)
+		suggestedUsers[i].IsFollowed = &isFollowed
+	}
+
+	c.JSON(http.StatusOK, suggestedUsers)
 }

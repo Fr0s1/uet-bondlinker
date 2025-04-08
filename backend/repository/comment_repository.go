@@ -44,8 +44,7 @@ func (r *CommentRepo) Create(comment *model.Comment) error {
 // FindByID finds a comment by ID
 func (r *CommentRepo) FindByID(id uuid.UUID) (*model.Comment, error) {
 	var comment model.Comment
-	// Use Scan with pointer instead of First with empty model
-	err := r.db.Preload("Author").Where("id = ?", id).Scan(&comment).Error
+	err := r.db.Preload("Author").First(&comment, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +66,7 @@ func (r *CommentRepo) Delete(id uuid.UUID) error {
 
 	// Get comment to get post ID for counter update
 	var comment model.Comment
-	if err := tx.Where("id = ?", id).Scan(&comment).Error; err != nil {
+	if err := tx.First(&comment, "id = ?", id).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -90,12 +89,11 @@ func (r *CommentRepo) Delete(id uuid.UUID) error {
 // FindByPostID finds all comments for a post with pagination
 func (r *CommentRepo) FindByPostID(postID uuid.UUID, filter model.Pagination) ([]model.Comment, error) {
 	var comments []model.Comment
-	// Use Scan with pointer instead of Find with empty slice
 	err := r.db.Preload("Author").
 		Where("post_id = ?", postID).
 		Order("created_at DESC").
 		Limit(filter.Limit).Offset(filter.Offset).
-		Scan(&comments).Error
+		Find(&comments).Error
 
 	return comments, err
 }
