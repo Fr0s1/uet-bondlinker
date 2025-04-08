@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageSquare, Share2, MoreHorizontal, Trash2 } from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -37,7 +37,6 @@ import { toast } from '@/components/ui/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import EmojiPicker from 'emoji-picker-react';
-import 'emoji-picker-react/dist/universal/style.css';
 
 export interface PostProps {
   id: string;
@@ -68,15 +67,15 @@ export interface PostProps {
   };
 }
 
-const Post = ({ 
-  id, 
-  author, 
-  content, 
-  image, 
-  createdAt, 
-  likes, 
-  comments, 
-  shares, 
+const Post = ({
+  id,
+  author,
+  content,
+  image,
+  createdAt,
+  likes,
+  comments,
+  shares,
   isLiked = false,
   sharedPost
 }: PostProps) => {
@@ -90,7 +89,7 @@ const Post = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const likePostMutation = useMutation({
     mutationFn: () => api.post(`/posts/${id}/like`),
     onSuccess: () => {
@@ -108,7 +107,7 @@ const Post = ({
       });
     }
   });
-  
+
   const unlikePostMutation = useMutation({
     mutationFn: () => api.delete(`/posts/${id}/like`),
     onSuccess: () => {
@@ -126,7 +125,7 @@ const Post = ({
       });
     }
   });
-  
+
   const sharePostMutation = useMutation({
     mutationFn: (content: string) => api.post(`/posts/${id}/share`, { content }),
     onSuccess: () => {
@@ -149,7 +148,7 @@ const Post = ({
       });
     }
   });
-  
+
   const deletePostMutation = useMutation({
     mutationFn: () => api.delete(`/posts/${id}`),
     onSuccess: () => {
@@ -170,7 +169,7 @@ const Post = ({
       });
     }
   });
-  
+
   const handleLike = () => {
     if (!isAuthenticated) {
       toast({
@@ -180,17 +179,17 @@ const Post = ({
       });
       return;
     }
-    
+
     setLiked(!liked);
     setLikeCount(prev => liked ? prev - 1 : prev + 1);
-    
+
     if (liked) {
       unlikePostMutation.mutate();
     } else {
       likePostMutation.mutate();
     }
   };
-  
+
   const handleShare = () => {
     if (!isAuthenticated) {
       toast({
@@ -200,43 +199,43 @@ const Post = ({
       });
       return;
     }
-    
+
     setShareDialogOpen(true);
   };
-  
+
   const submitShare = () => {
     sharePostMutation.mutate(shareContent);
   };
-  
+
   const handleDeletePost = () => {
     setDeleteDialogOpen(true);
   };
-  
+
   const confirmDelete = () => {
     deletePostMutation.mutate();
   };
-  
+
   const toggleComments = () => {
     setShowComments(!showComments);
   };
-  
+
   const onEmojiClick = (emojiObject: any) => {
     setShareContent(prev => prev + emojiObject.emoji);
     setShowEmojiPicker(false);
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
-  
+
   const isAuthor = user?.id === author.id;
-  
+
   return (
     <div className="bg-white rounded-xl overflow-hidden mb-4 card-shadow animate-fade-in">
       <div className="p-4">
@@ -255,7 +254,7 @@ const Post = ({
               </p>
             </div>
           </Link>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8">
@@ -276,7 +275,7 @@ const Post = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
+
         <div className="mt-3 text-left">
           <div className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -284,7 +283,7 @@ const Post = ({
             </ReactMarkdown>
           </div>
         </div>
-        
+
         {sharedPost && (
           <div className="mt-3 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center space-x-2">
@@ -306,50 +305,50 @@ const Post = ({
             </div>
             {sharedPost.image && (
               <div className="mt-2 rounded-lg overflow-hidden">
-                <img 
-                  src={sharedPost.image} 
-                  alt="Shared post content" 
+                <img
+                  src={sharedPost.image}
+                  alt="Shared post content"
                   className="w-full h-auto object-cover max-h-64"
                 />
               </div>
             )}
           </div>
         )}
-        
+
         {image && (
           <div className="mt-3 rounded-lg overflow-hidden">
-            <img 
-              src={image} 
-              alt="Post content" 
+            <img
+              src={image}
+              alt="Post content"
               className="w-full h-auto object-cover max-h-96"
             />
           </div>
         )}
-        
+
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className={`flex items-center space-x-1 ${liked ? 'text-red-500' : 'text-gray-500'}`}
             onClick={handleLike}
           >
             <Heart className="h-4 w-4" fill={liked ? "currentColor" : "none"} />
             <span>{likeCount}</span>
           </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
+
+          <Button
+            variant="ghost"
+            size="sm"
             className="flex items-center space-x-1 text-gray-500"
             onClick={toggleComments}
           >
             <MessageSquare className="h-4 w-4" />
             <span>{comments}</span>
           </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
+
+          <Button
+            variant="ghost"
+            size="sm"
             className="flex items-center space-x-1 text-gray-500"
             onClick={handleShare}
           >
@@ -358,9 +357,9 @@ const Post = ({
           </Button>
         </div>
       </div>
-      
+
       {showComments && <CommentSection postId={id} />}
-      
+
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -377,10 +376,10 @@ const Post = ({
                 onChange={(e) => setShareContent(e.target.value)}
                 className="min-h-24"
               />
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 className="absolute bottom-2 right-2"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               >
@@ -392,7 +391,7 @@ const Post = ({
                 </div>
               )}
             </div>
-            
+
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Avatar className="h-6 w-6">
@@ -424,7 +423,7 @@ const Post = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -435,8 +434,8 @@ const Post = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-500 hover:bg-red-600" 
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600"
               onClick={confirmDelete}
               disabled={deletePostMutation.isPending}
             >

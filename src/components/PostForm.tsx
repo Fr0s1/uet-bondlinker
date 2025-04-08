@@ -10,7 +10,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Link } from 'react-router-dom';
 import EmojiPicker from 'emoji-picker-react';
-import 'emoji-picker-react/dist/universal/style.css';
 
 interface UploadResponse {
   imageUrl: string;
@@ -26,7 +25,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
@@ -34,9 +33,9 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       return api.post<UploadResponse>('/uploads/image', formData, true);
     }
   });
-  
+
   const createPostMutation = useMutation({
-    mutationFn: (postData: { content: string, image?: string }) => 
+    mutationFn: (postData: { content: string, image?: string }) =>
       api.post('/posts', postData),
     onSuccess: () => {
       setContent('');
@@ -44,12 +43,12 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       setImagePreview(null);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
-      
+
       toast({
         title: "Post created",
         description: "Your post has been shared successfully.",
       });
-      
+
       if (onPostCreated) {
         onPostCreated();
       }
@@ -63,24 +62,24 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       });
     }
   });
-  
+
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
-  
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-    
+
     setImage(file);
   };
-  
+
   const removeImage = () => {
     setImage(null);
     setImagePreview(null);
@@ -88,15 +87,15 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       fileInputRef.current.value = '';
     }
   };
-  
+
   const onEmojiClick = (emojiObject: any) => {
     setContent(prev => prev + emojiObject.emoji);
     setShowEmojiPicker(false);
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated) {
       toast({
         title: "Authentication required",
@@ -105,7 +104,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       });
       return;
     }
-    
+
     if (!content.trim() && !image) {
       toast({
         title: "Cannot create empty post",
@@ -114,17 +113,17 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       });
       return;
     }
-    
+
     try {
       setIsUploading(true);
       let imageUrl;
-      
+
       if (image) {
         const response = await uploadImageMutation.mutateAsync(image);
         imageUrl = response.imageUrl;
       }
-      
-      await createPostMutation.mutateAsync({ 
+
+      await createPostMutation.mutateAsync({
         content: content.trim(),
         image: imageUrl
       });
@@ -132,7 +131,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       setIsUploading(false);
     }
   };
-  
+
   if (!isAuthenticated) {
     return (
       <div className="bg-white rounded-xl p-4 card-shadow mb-6 animate-fade-in">
@@ -151,7 +150,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="bg-white rounded-xl p-4 card-shadow mb-6 animate-fade-in">
       <form onSubmit={handleSubmit}>
@@ -160,7 +159,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
             <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
             <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1">
             <div className="relative">
               <Textarea
@@ -172,12 +171,12 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
               <div className="text-xs text-gray-500 mt-1">
                 <span>Supports markdown and emojis</span>
               </div>
-              
+
               {imagePreview && (
                 <div className="relative mt-2 rounded-lg overflow-hidden">
-                  <img 
-                    src={imagePreview} 
-                    alt="Post image preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Post image preview"
                     className="w-full h-auto max-h-64 object-cover rounded-lg"
                   />
                   <Button
@@ -192,49 +191,49 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center justify-between mt-3 pt-3 border-t">
               <div className="flex space-x-2">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   className="text-social-blue rounded-full h-9 w-9"
                   onClick={handleImageClick}
                 >
                   <Image className="h-5 w-5" />
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
                     accept="image/*"
                     onChange={handleImageChange}
                   />
                 </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   className="text-social-blue rounded-full h-9 w-9"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
                   <Smile className="h-5 w-5" />
                 </Button>
-                
+
                 {showEmojiPicker && (
                   <div className="absolute mt-10 z-10">
                     <EmojiPicker onEmojiClick={onEmojiClick} />
                   </div>
                 )}
-                
+
                 <Button type="button" variant="ghost" size="icon" className="text-social-blue rounded-full h-9 w-9">
                   <MapPin className="h-5 w-5" />
                 </Button>
               </div>
-              
-              <Button 
-                type="submit" 
+
+              <Button
+                type="submit"
                 disabled={isUploading || createPostMutation.isPending || (!content.trim() && !image)}
                 className="px-5 gradient-blue"
               >
