@@ -20,7 +20,7 @@ export const useSearch = (query: string, limit = 10) => {
     queryFn: () => api.get<SearchResults>(`/search?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
     staleTime: 60000, // 1 minute
-    keepPreviousData: true, // Keep old data while fetching new
+    placeholderData: { users: [], posts: [] }, // Use placeholderData instead of keepPreviousData
   });
   
   return {
@@ -41,7 +41,7 @@ export const useSearchUsers = (query: string, limit = 10) => {
     queryFn: () => api.get<User[]>(`/search/users?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
     staleTime: 60000,
-    keepPreviousData: true,
+    placeholderData: [], // Use placeholderData instead of keepPreviousData
   });
   
   return {
@@ -62,7 +62,7 @@ export const useSearchPosts = (query: string, limit = 10) => {
     queryFn: () => api.get<Post[]>(`/search/posts?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: debouncedQuery.length > 0,
     staleTime: 60000,
-    keepPreviousData: true,
+    placeholderData: [], // Use placeholderData instead of keepPreviousData
   });
   
   return {
