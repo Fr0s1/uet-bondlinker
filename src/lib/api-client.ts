@@ -29,14 +29,18 @@ const handleError = (error: unknown) => {
 // Generic fetch function with authorization header
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isFormData: boolean = false
 ): Promise<T> {
   const token = localStorage.getItem("token");
   
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
     ...options.headers,
   };
+  
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
   
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -67,17 +71,25 @@ async function fetchApi<T>(
 export const api = {
   get: <T>(endpoint: string) => fetchApi<T>(endpoint, { method: "GET" }),
   
-  post: <T>(endpoint: string, data?: any) =>
-    fetchApi<T>(endpoint, {
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  post: <T>(endpoint: string, data?: any, isFormData: boolean = false) =>
+    fetchApi<T>(
+      endpoint, 
+      {
+        method: "POST",
+        body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      },
+      isFormData
+    ),
   
-  put: <T>(endpoint: string, data: any) =>
-    fetchApi<T>(endpoint, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+  put: <T>(endpoint: string, data: any, isFormData: boolean = false) =>
+    fetchApi<T>(
+      endpoint, 
+      {
+        method: "PUT",
+        body: isFormData ? data : JSON.stringify(data),
+      },
+      isFormData
+    ),
   
   delete: <T>(endpoint: string) =>
     fetchApi<T>(endpoint, { method: "DELETE" }),

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageSquare, Share, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageSquare, Share2, MoreHorizontal, Trash2 } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -17,13 +17,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import CommentSection from './CommentSection';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import EmojiPicker from 'emoji-picker-react';
+import 'emoji-picker-react/dist/universal/style.css';
 
 export interface PostProps {
   id: string;
@@ -68,9 +83,12 @@ const Post = ({
 }: PostProps) => {
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likes);
+  const [shareCount, setShareCount] = useState(shares);
   const [showComments, setShowComments] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareContent, setShareContent] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   
@@ -85,6 +103,11 @@ const Post = ({
       // Revert optimistic update on error
       setLiked(!liked);
       setLikeCount(prev => liked ? prev + 1 : prev - 1);
+      toast({
+        title: "Error",
+        description: "Failed to like post. Please try again.",
+        variant: "destructive"
+      });
     }
   });
   
@@ -99,6 +122,11 @@ const Post = ({
       // Revert optimistic update on error
       setLiked(!liked);
       setLikeCount(prev => liked ? prev - 1 : prev + 1);
+      toast({
+        title: "Error",
+        description: "Failed to unlike post. Please try again.",
+        variant: "destructive"
+      });
     }
   });
   
@@ -107,6 +135,7 @@ const Post = ({
     onSuccess: () => {
       setShareDialogOpen(false);
       setShareContent('');
+      setShareCount(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['trending'] });
@@ -119,6 +148,27 @@ const Post = ({
       toast({
         title: "Error",
         description: "Failed to share the post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const deletePostMutation = useMutation({
+    mutationFn: () => api.delete(`/posts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['trending'] });
+      toast({
+        title: "Post deleted",
+        description: "Your post has been deleted successfully!",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the post. Please try again.",
         variant: "destructive",
       });
     }
@@ -163,8 +213,21 @@ const Post = ({
     sharePostMutation.mutate(shareContent);
   };
   
+  const handleDeletePost = () => {
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    deletePostMutation.mutate();
+  };
+  
   const toggleComments = () => {
     setShowComments(!showComments);
+  };
+  
+  const onEmojiClick = (emojiObject: any) => {
+    setShareContent(prev => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
   };
   
   const formatDate = (dateString: string) => {
@@ -188,7 +251,7 @@ const Post = ({
               <AvatarImage src={author.avatar || "/placeholder.svg"} alt={author.name} />
               <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="text-left">
+            <div>
               <h3 className="font-medium group-hover:text-social-blue transition-colors">
                 {author.name}
               </h3>
@@ -207,8 +270,9 @@ const Post = ({
             <DropdownMenuContent align="end">
               {isAuthor && (
                 <>
-                  <DropdownMenuItem>Edit Post</DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-500">Delete Post</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500" onClick={handleDeletePost}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete Post
+                  </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuItem>Save Post</DropdownMenuItem>
@@ -219,7 +283,9 @@ const Post = ({
         </div>
         
         <div className="mt-3 text-left">
-          <p className="text-gray-800 whitespace-pre-line">{content}</p>
+          <ReactMarkdown className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
+            {content}
+          </ReactMarkdown>
         </div>
         
         {/* Shared post */}
@@ -230,12 +296,16 @@ const Post = ({
                 <AvatarImage src={sharedPost.author.avatar || "/placeholder.svg"} alt={sharedPost.author.name} />
                 <AvatarFallback>{sharedPost.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div className="text-left">
+              <div>
                 <span className="font-medium text-sm">{sharedPost.author.name}</span>
                 <span className="text-xs text-gray-500 ml-1">@{sharedPost.author.username} · {formatDate(sharedPost.createdAt)}</span>
               </div>
             </div>
-            <p className="text-gray-800 text-sm mt-2 text-left">{sharedPost.content}</p>
+            <div className="mt-2">
+              <ReactMarkdown className="text-gray-800 text-sm prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
+                {sharedPost.content}
+              </ReactMarkdown>
+            </div>
             {sharedPost.image && (
               <div className="mt-2 rounded-lg overflow-hidden">
                 <img 
@@ -285,8 +355,8 @@ const Post = ({
             className="flex items-center space-x-1 text-gray-500"
             onClick={handleShare}
           >
-            <Share className="h-4 w-4" />
-            <span>{shares}</span>
+            <Share2 className="h-4 w-4" />
+            <span>{shareCount}</span>
           </Button>
         </div>
       </div>
@@ -302,12 +372,28 @@ const Post = ({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Textarea
-              placeholder="Write something about this post..."
-              value={shareContent}
-              onChange={(e) => setShareContent(e.target.value)}
-              className="min-h-24"
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="Write something about this post..."
+                value={shareContent}
+                onChange={(e) => setShareContent(e.target.value)}
+                className="min-h-24"
+              />
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="absolute bottom-2 right-2"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              >
+                😊
+              </Button>
+              {showEmojiPicker && (
+                <div className="absolute bottom-12 right-0 z-10">
+                  <EmojiPicker onEmojiClick={onEmojiClick} />
+                </div>
+              )}
+            </div>
             
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center space-x-2">
@@ -317,10 +403,17 @@ const Post = ({
                 </Avatar>
                 <span className="text-sm font-medium">{author.name}</span>
               </div>
-              <p className="text-sm mt-2 line-clamp-2 text-left">{content}</p>
+              <div className="text-sm mt-2 line-clamp-2">
+                <ReactMarkdown className="prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
+                  {content}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
           <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
             <Button
               onClick={submitShare}
               disabled={sharePostMutation.isPending}
@@ -331,6 +424,27 @@ const Post = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your post.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600" 
+              onClick={confirmDelete}
+              disabled={deletePostMutation.isPending}
+            >
+              {deletePostMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

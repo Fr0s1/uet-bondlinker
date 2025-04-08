@@ -30,7 +30,7 @@ const Trending = () => {
   
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6 text-left">Trending Posts</h1>
+      <h1 className="text-2xl font-bold mb-6">Trending Posts</h1>
       
       <div className="space-y-4">
         {posts.map((post) => (

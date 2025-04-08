@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Post from './Post';
-import { usePosts, useFeed, Post as PostType } from '@/hooks/use-posts';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePosts, useFeed } from '@/hooks/use-posts';
 import { Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -12,14 +11,13 @@ interface FeedProps {
 }
 
 const Feed = ({ type = 'public', userId }: FeedProps) => {
-  const { isAuthenticated } = useAuth();
   const { posts: publicPosts, isLoading: isPublicLoading, page: publicPage, setPage: setPublicPage } = usePosts(userId);
   const { posts: personalPosts, isLoading: isPersonalLoading, page: feedPage, setPage: setFeedPage } = useFeed();
   
-  const posts = type === 'personal' && isAuthenticated ? personalPosts : publicPosts;
-  const isLoading = type === 'personal' && isAuthenticated ? isPersonalLoading : isPublicLoading;
-  const page = type === 'personal' && isAuthenticated ? feedPage : publicPage;
-  const setPage = type === 'personal' && isAuthenticated ? setFeedPage : setPublicPage;
+  const posts = type === 'personal' ? personalPosts : publicPosts;
+  const isLoading = type === 'personal' ? isPersonalLoading : isPublicLoading;
+  const page = type === 'personal' ? feedPage : publicPage;
+  const setPage = type === 'personal' ? setFeedPage : setPublicPage;
   
   if (isLoading && page === 1) {
     return (
@@ -60,8 +58,20 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
           createdAt={post.created_at}
           likes={post.likes}
           comments={post.comments}
-          shares={0} // API doesn't support shares yet
+          shares={post.shares}
           isLiked={post.is_liked}
+          sharedPost={post.shared_post ? {
+            id: post.shared_post.id,
+            author: {
+              id: post.shared_post.user_id,
+              name: post.shared_post.author?.name || "Unknown User",
+              username: post.shared_post.author?.username || "unknown",
+              avatar: post.shared_post.author?.avatar || "/placeholder.svg",
+            },
+            content: post.shared_post.content,
+            image: post.shared_post.image,
+            createdAt: post.shared_post.created_at,
+          } : undefined}
         />
       ))}
       
