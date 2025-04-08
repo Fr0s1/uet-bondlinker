@@ -1,4 +1,3 @@
-
 package model
 
 import (
@@ -28,6 +27,11 @@ type Post struct {
   LikesList    []Like    `json:"-" gorm:"foreignKey:PostID"`
   CommentsList []Comment `json:"-" gorm:"foreignKey:PostID"`
   SharedPost   *Post     `json:"shared_post,omitempty" gorm:"foreignKey:SharedPostID"`
+}
+
+// TableName specifies the table name for Post model
+func (Post) TableName() string {
+  return "posts"
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.
@@ -77,6 +81,11 @@ type Comment struct {
   Post   *Post `json:"-" gorm:"foreignKey:PostID"`
 }
 
+// TableName specifies the table name for Comment model
+func (Comment) TableName() string {
+  return "comments"
+}
+
 // BeforeCreate will set a UUID rather than numeric ID.
 func (c *Comment) BeforeCreate(tx *gorm.DB) error {
   if c.ID == uuid.Nil {
@@ -104,4 +113,9 @@ type Like struct {
   // Relations
   User User `json:"-" gorm:"foreignKey:UserID"`
   Post Post `json:"-" gorm:"foreignKey:PostID"`
+}
+
+// TableName specifies the table name for Like model
+func (Like) TableName() string {
+  return "likes"
 }

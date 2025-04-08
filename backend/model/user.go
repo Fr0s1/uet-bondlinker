@@ -32,6 +32,11 @@ type User struct {
 	Comments []Comment `json:"-" gorm:"foreignKey:UserID"`
 }
 
+// TableName specifies the table name for User model
+func (User) TableName() string {
+	return "users"
+}
+
 // BeforeCreate will set a UUID rather than numeric ID.
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	if u.ID == uuid.Nil {
@@ -78,4 +83,9 @@ type Follow struct {
 	// Relations
 	Follower  User `json:"-" gorm:"foreignKey:FollowerID"`
 	Following User `json:"-" gorm:"foreignKey:FollowingID"`
+}
+
+// TableName specifies the table name for Follow model
+func (Follow) TableName() string {
+	return "follows"
 }
