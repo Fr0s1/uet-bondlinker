@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PostForm from '@/components/PostForm';
 import Feed from '@/components/Feed';
@@ -74,7 +75,7 @@ const Index = () => {
         <div className="sticky top-20 space-y-4">
           {isAuthenticated && (
             <div className="bg-white rounded-xl p-4 card-shadow animate-fade-in">
-              <h3 className="font-semibold text-lg mb-4">Who to follow</h3>
+              <h3 className="font-semibold text-lg mb-4 text-left">Who to follow</h3>
               {isSuggestedUsersLoading ? (
                 <div className="flex justify-center py-6">
                   <Loader2 className="h-6 w-6 animate-spin text-social-blue" />
@@ -89,7 +90,7 @@ const Index = () => {
                           alt={user.name} 
                           className="w-10 h-10 rounded-full avatar-shadow"
                         />
-                        <div>
+                        <div className="text-left">
                           <p className="font-medium text-sm">{user.name}</p>
                           <p className="text-xs text-gray-500">@{user.username}</p>
                         </div>
@@ -113,7 +114,7 @@ const Index = () => {
           )}
           
           <div className="bg-white rounded-xl p-4 card-shadow animate-fade-in">
-            <h3 className="font-semibold text-lg mb-4">Trends for you</h3>
+            <h3 className="font-semibold text-lg mb-4 text-left">Trends for you</h3>
             {isTrendingTopicsLoading ? (
               <div className="flex justify-center py-6">
                 <Loader2 className="h-6 w-6 animate-spin text-social-blue" />
@@ -121,7 +122,7 @@ const Index = () => {
             ) : trendingTopics && trendingTopics.length > 0 ? (
               <div className="space-y-4">
                 {trendingTopics.map((topic: TrendingTopic) => (
-                  <div key={topic.id} className="group cursor-pointer">
+                  <div key={topic.id} className="group cursor-pointer text-left">
                     <h4 className="font-medium group-hover:text-social-blue transition-colors">
                       {topic.name}
                     </h4>
@@ -134,7 +135,7 @@ const Index = () => {
             )}
           </div>
           
-          <div className="p-4 text-xs text-gray-500">
+          <div className="p-4 text-xs text-gray-500 text-left">
             <div className="flex flex-wrap gap-2">
               <a href="#" className="hover:underline">Terms of Service</a>
               <a href="#" className="hover:underline">Privacy Policy</a>

@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import CommentSection from './CommentSection';
@@ -125,6 +124,7 @@ const Post = ({
     }
   });
   
+  // Fixed like toggle function
   const handleLike = () => {
     if (!isAuthenticated) {
       toast({
@@ -188,7 +188,7 @@ const Post = ({
               <AvatarImage src={author.avatar || "/placeholder.svg"} alt={author.name} />
               <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div>
+            <div className="text-left">
               <h3 className="font-medium group-hover:text-social-blue transition-colors">
                 {author.name}
               </h3>
@@ -218,7 +218,7 @@ const Post = ({
           </DropdownMenu>
         </div>
         
-        <div className="mt-3">
+        <div className="mt-3 text-left">
           <p className="text-gray-800 whitespace-pre-line">{content}</p>
         </div>
         
@@ -230,12 +230,12 @@ const Post = ({
                 <AvatarImage src={sharedPost.author.avatar || "/placeholder.svg"} alt={sharedPost.author.name} />
                 <AvatarFallback>{sharedPost.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <div>
+              <div className="text-left">
                 <span className="font-medium text-sm">{sharedPost.author.name}</span>
                 <span className="text-xs text-gray-500 ml-1">@{sharedPost.author.username} · {formatDate(sharedPost.createdAt)}</span>
               </div>
             </div>
-            <p className="text-gray-800 text-sm mt-2">{sharedPost.content}</p>
+            <p className="text-gray-800 text-sm mt-2 text-left">{sharedPost.content}</p>
             {sharedPost.image && (
               <div className="mt-2 rounded-lg overflow-hidden">
                 <img 
@@ -317,7 +317,7 @@ const Post = ({
                 </Avatar>
                 <span className="text-sm font-medium">{author.name}</span>
               </div>
-              <p className="text-sm mt-2 line-clamp-2">{content}</p>
+              <p className="text-sm mt-2 line-clamp-2 text-left">{content}</p>
             </div>
           </div>
           <DialogFooter>

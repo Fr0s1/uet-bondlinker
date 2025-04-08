@@ -1,3 +1,4 @@
+
 package repository
 
 import (
@@ -92,13 +93,12 @@ func (r *PostRepo) FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.
   // Get posts from followed users and own posts using a single join
   err := r.db.Preload("Author").
     Distinct("posts.*").
-    Select("posts.*").
     Table("posts").
     Joins("LEFT JOIN follows ON posts.user_id = follows.following_id AND follows.follower_id = ?", userID).
     Where("follows.follower_id = ? OR posts.user_id = ?", userID, userID).
     Order("posts.created_at DESC").
     Limit(filter.Limit).Offset(filter.Offset).
-    Scan(&posts).Error
+    Find(&posts).Error
 
   return posts, err
 }
@@ -111,7 +111,7 @@ func (r *PostRepo) FindTrending(filter model.Pagination) ([]model.Post, error) {
   err := r.db.Preload("Author").
     Order("(likes_count + comments_count) DESC, created_at DESC").
     Limit(filter.Limit).Offset(filter.Offset).
-    Scan(&posts).Error
+    Find(&posts).Error
 
   return posts, err
 }
@@ -125,7 +125,7 @@ func (r *PostRepo) SearchPosts(query string, filter model.Pagination) ([]model.P
     Where("content ILIKE ?", "%"+query+"%").
     Order("created_at DESC").
     Limit(filter.Limit).Offset(filter.Offset).
-    Scan(&posts).Error
+    Find(&posts).Error
 
   return posts, err
 }
@@ -191,10 +191,34 @@ func (r *PostRepo) IsLiked(userID, postID uuid.UUID) (bool, error) {
   return count > 0, err
 }
 
+// BatchIsLiked checks if multiple posts are liked by a user
+func (r *PostRepo) BatchIsLiked(userID uuid.UUID, postIDs []uuid.UUID) (map[uuid.UUID]bool, error) {
+  var likes []model.Like
+  result := make(map[uuid.UUID]bool)
+  
+  // Initialize all posts as not liked
+  for _, id := range postIDs {
+    result[id] = false
+  }
+  
+  // Find all likes from user for these posts
+  err := r.db.Where("user_id = ? AND post_id IN ?", userID, postIDs).Find(&likes).Error
+  if err != nil {
+    return result, err
+  }
+  
+  // Mark liked posts
+  for _, like := range likes {
+    result[like.PostID] = true
+  }
+  
+  return result, nil
+}
+
 // CountLikes returns the number of likes for a post
 func (r *PostRepo) CountLikes(postID uuid.UUID) (int, error) {
   var post model.Post
-  if err := r.db.Select("likes_count").Where("id = ?", postID).Scan(&post).Error; err != nil {
+  if err := r.db.Select("likes_count").Where("id = ?", postID).First(&post).Error; err != nil {
     return 0, err
   }
   return post.LikesCount, nil
@@ -263,7 +287,6 @@ func (r *PostRepo) GetSuggestedPosts(userID uuid.UUID, filter model.Pagination) 
   // This is a "friends of friends" approach
   err := r.db.Preload("Author").
     Distinct("posts.*").
-    Select("posts.*").
     Table("posts").
     Joins("JOIN users u ON posts.user_id = u.id").
     Joins("JOIN follows f1 ON f1.following_id = u.id").

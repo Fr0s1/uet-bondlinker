@@ -74,7 +74,7 @@ const Profile = () => {
         />
         
         <div className="mt-6">
-          <h2 className="font-semibold text-xl mb-4 px-4">Posts</h2>
+          <h2 className="font-semibold text-xl mb-4 px-4 text-left">Posts</h2>
           {isPostsLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-social-blue" />
