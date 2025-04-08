@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import MessageBubble from './MessageBubble';
 
 interface Message {
@@ -16,6 +15,16 @@ interface Message {
   createdAt: string;
   senderId: string;
   recipientId: string;
+}
+
+interface Conversation {
+  id: string;
+  recipient: {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string | null;
+  };
 }
 
 interface ChatWindowProps {
@@ -32,25 +41,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const { data: conversation, isLoading: isConversationLoading } = useQuery({
     queryKey: ['conversation', conversationId],
     queryFn: async () => {
-      try {
-        // Mock data - in reality, you'd have a backend endpoint
-        // const response = await api.get(`/conversations/${conversationId}`);
-        // return response;
-        
-        // Mock data
-        return {
-          id: conversationId,
-          recipient: {
-            id: '2',
-            name: 'Jane Smith',
-            username: 'janesmith',
-            avatar: null
-          }
-        };
-      } catch (error) {
-        console.error('Error fetching conversation:', error);
-        throw error;
-      }
+      return api.get<Conversation>(`/conversations/${conversationId}`);
     },
     enabled: !!conversationId
   });
@@ -59,55 +50,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const { data: messages, isLoading: isMessagesLoading } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      try {
-        // Mock data - in reality, you'd have a backend endpoint
-        // const response = await api.get(`/conversations/${conversationId}/messages`);
-        // return response;
-        
-        // Mock messages
-        const mockMessages = [
-          {
-            id: '1',
-            content: 'Hey, how are you doing?',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-            senderId: '2', // from recipient
-            recipientId: user?.id || '',
-          },
-          {
-            id: '2',
-            content: 'I\'m good, thanks for asking. How about you?',
-            createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(), // 55 minutes ago
-            senderId: user?.id || '',
-            recipientId: '2',
-          },
-          {
-            id: '3',
-            content: 'Not bad! Just working on some new features for the app.',
-            createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(), // 50 minutes ago
-            senderId: '2',
-            recipientId: user?.id || '',
-          },
-          {
-            id: '4',
-            content: 'That sounds interesting! What kind of features?',
-            createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
-            senderId: user?.id || '',
-            recipientId: '2',
-          },
-          {
-            id: '5',
-            content: 'I\'m working on a messaging system, actually!',
-            createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(), // 40 minutes ago
-            senderId: '2',
-            recipientId: user?.id || '',
-          }
-        ];
-        
-        return mockMessages;
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        throw error;
-      }
+      return api.get<Message[]>(`/conversations/${conversationId}/messages`);
     },
     enabled: !!conversationId && !!user
   });
@@ -115,29 +58,16 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      try {
-        // In reality, you'd have a backend endpoint
-        // return api.post(`/conversations/${conversationId}/messages`, { content });
-        
-        // Mock sending a message
-        console.log('Sending message:', content);
-        return {
-          id: Date.now().toString(),
-          content,
-          createdAt: new Date().toISOString(),
-          senderId: user?.id || '',
-          recipientId: conversation?.recipient.id || '',
-        };
-      } catch (error) {
-        console.error('Error sending message:', error);
-        throw error;
-      }
+      return api.post<Message>(`/conversations/${conversationId}/messages`, { content });
     },
     onSuccess: (newMessage) => {
       // Update the messages cache
       queryClient.setQueryData(['messages', conversationId], (oldData: Message[] | undefined) => {
         return oldData ? [...oldData, newMessage] : [newMessage];
       });
+      
+      // Update conversations list to show latest message
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       // Scroll to bottom
       scrollToBottom();

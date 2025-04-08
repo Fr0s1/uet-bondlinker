@@ -34,59 +34,7 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      try {
-        // This is a mock implementation - in reality you'd have a backend endpoint
-        // return api.get<Conversation[]>('/conversations');
-        
-        // Mock data for demonstration
-        return [
-          {
-            id: '1',
-            recipient: {
-              id: '2',
-              name: 'Jane Smith',
-              username: 'janesmith',
-              avatar: null
-            },
-            lastMessage: {
-              content: 'Hey, how are you doing?',
-              createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-              isRead: true
-            }
-          },
-          {
-            id: '2',
-            recipient: {
-              id: '3',
-              name: 'John Doe',
-              username: 'johndoe',
-              avatar: null
-            },
-            lastMessage: {
-              content: 'Can we meet tomorrow?',
-              createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-              isRead: false
-            }
-          },
-          {
-            id: '3',
-            recipient: {
-              id: '4',
-              name: 'Alice Johnson',
-              username: 'alicej',
-              avatar: null
-            },
-            lastMessage: {
-              content: 'Thanks for your help!',
-              createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-              isRead: true
-            }
-          }
-        ] as Conversation[];
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        return [];
-      }
+      return api.get<Conversation[]>('/conversations');
     },
     enabled: !!user
   });
