@@ -1,3 +1,4 @@
+
 package config
 
 import (
@@ -10,6 +11,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	AWS      AWSConfig
 }
 
 // ServerConfig holds server-specific configuration
@@ -33,6 +35,14 @@ type DatabaseConfig struct {
 type JWTConfig struct {
 	Secret     string
 	ExpiryTime time.Duration
+}
+
+// AWSConfig holds AWS-specific configuration
+type AWSConfig struct {
+	Region          string
+	Bucket          string
+	AccessKeyID     string
+	SecretAccessKey string
 }
 
 // New creates a new configuration from environment variables
@@ -59,6 +69,12 @@ func New() *Config {
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", "default_jwt_secret"),
 			ExpiryTime: jwtExpiry,
+		},
+		AWS: AWSConfig{
+			Region:          getEnv("AWS_REGION", "us-east-1"),
+			Bucket:          getEnv("AWS_BUCKET", "socialnet-uploads"),
+			AccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
+			SecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
 		},
 	}
 }

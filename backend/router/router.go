@@ -39,6 +39,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// Initialize controllers
 	userController := controller.NewUserController(repo, cfg)
 	authController := controller.NewAuthController(repo, cfg)
+	fileController := controller.NewFileController(cfg)
 
 	// Initialize post controllers
 	postController := controller.NewPostController(repo, cfg)
@@ -74,13 +75,20 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// Protected routes
 			users.Use(middleware.AuthMiddleware(cfg))
-			users.GET("/suggested", userController.GetSuggestedUsers)  // New endpoint for suggested users
+			users.GET("/suggested", userController.GetSuggestedUsers)
 			users.PUT("/:id", userController.UpdateUser)
 			users.GET("/me", userController.GetCurrentUser)
 			users.POST("/follow/:id", userController.FollowUser)
 			users.DELETE("/follow/:id", userController.UnfollowUser)
 			users.GET("/followers", userController.GetFollowers)
 			users.GET("/following", userController.GetFollowing)
+		}
+
+		// File upload routes
+		uploads := v1.Group("/uploads")
+		{
+			uploads.Use(middleware.AuthMiddleware(cfg))
+			uploads.POST("", fileController.UploadFile)
 		}
 
 		// Post routes

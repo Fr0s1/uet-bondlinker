@@ -64,14 +64,38 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
       });
     }
   };
+
+  // File upload mutation for S3
+  const fileUploadMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return api.post<{url: string}>("/uploads", formData, true);
+    },
+    onSuccess: (data) => {
+      // After successful S3 upload, update the user profile with the new avatar URL
+      updateProfileMutation.mutate({
+        avatar: data.url
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  });
   
   const updateProfileMutation = useMutation({
-    mutationFn: (formData: FormData) => 
-      api.put<any>(`/users/profile`, formData, true),
+    mutationFn: (data: any) => 
+      api.put<any>(`/users/${user.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'username', user.username] });
       queryClient.invalidateQueries({ queryKey: ['auth'] });
       setIsEditDialogOpen(false);
+      setIsUploading(false);
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully!",
@@ -83,6 +107,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+      setIsUploading(false);
     }
   });
   
@@ -90,30 +115,28 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
-    const formData = new FormData();
-    formData.append("avatar", file);
-    
     setIsUploading(true);
-    try {
-      await updateProfileMutation.mutateAsync(formData);
-    } finally {
-      setIsUploading(false);
-    }
+    toast({
+      title: "Uploading...",
+      description: "Your avatar is being uploaded, please wait.",
+    });
+    
+    // Upload file to S3 via our backend
+    fileUploadMutation.mutate(file);
   };
   
   const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
-    const formData = new FormData();
-    formData.append("cover", file);
-    
     setIsUploading(true);
-    try {
-      await updateProfileMutation.mutateAsync(formData);
-    } finally {
-      setIsUploading(false);
-    }
+    toast({
+      title: "Uploading...",
+      description: "Your cover image is being uploaded, please wait.",
+    });
+    
+    // Upload file to S3 via our backend
+    fileUploadMutation.mutate(file);
   };
   
   const formatDate = (dateString: string) => {
