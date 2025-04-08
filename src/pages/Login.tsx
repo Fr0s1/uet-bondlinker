@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface LocationState {
+  from?: string;
+}
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from location state, or default to home page
+  const from = (location.state as LocationState)?.from || '/';
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -43,7 +51,8 @@ const Login = () => {
     
     try {
       await login(email, password);
-      navigate('/');
+      // Redirect to the page they were trying to access, or home if none
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     }
