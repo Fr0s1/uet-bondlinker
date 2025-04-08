@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Post from './Post';
-import { usePosts, useFeed } from '@/hooks/use-posts';
+import { usePosts, useFeed, Post as PostType } from '@/hooks/use-posts';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 

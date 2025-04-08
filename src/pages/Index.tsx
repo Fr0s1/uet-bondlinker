@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import PostForm from '@/components/PostForm';
@@ -11,21 +10,32 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
+interface SuggestedUser {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string | null;
+}
+
+interface TrendingTopic {
+  id: string;
+  name: string;
+  posts: number;
+}
+
 const Index = () => {
   const { user, isAuthenticated } = useAuth();
   const [refreshFeed, setRefreshFeed] = React.useState(false);
   
-  // Fetch suggested users to follow
-  const { data: suggestedUsers, isLoading: isSuggestedUsersLoading } = useQuery({
+  const { data: suggestedUsers, isLoading: isSuggestedUsersLoading } = useQuery<SuggestedUser[]>({
     queryKey: ['suggested-users'],
-    queryFn: () => api.get('/users/suggested'),
+    queryFn: () => api.get<SuggestedUser[]>('/users/suggested'),
     enabled: isAuthenticated
   });
   
-  // Fetch trending topics
-  const { data: trendingTopics, isLoading: isTrendingTopicsLoading } = useQuery({
+  const { data: trendingTopics, isLoading: isTrendingTopicsLoading } = useQuery<TrendingTopic[]>({
     queryKey: ['trending-topics'],
-    queryFn: () => api.get('/posts/trending'),
+    queryFn: () => api.get<TrendingTopic[]>('/posts/trending'),
   });
   
   const handlePostCreated = () => {
@@ -38,7 +48,6 @@ const Index = () => {
       
       <div className="container py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left Sidebar - User Profile */}
           <aside className="hidden lg:block lg:col-span-3">
             {isAuthenticated && user && (
               <div className="sticky top-20">
@@ -62,16 +71,13 @@ const Index = () => {
             )}
           </aside>
           
-          {/* Main Content */}
           <main className="lg:col-span-6">
             <PostForm onPostCreated={handlePostCreated} />
             <Feed />
           </main>
           
-          {/* Right Sidebar - Suggestions and Trends */}
           <aside className="hidden lg:block lg:col-span-3">
             <div className="sticky top-20 space-y-4">
-              {/* Who to follow */}
               {isAuthenticated && (
                 <div className="bg-white rounded-xl p-4 card-shadow animate-fade-in">
                   <h3 className="font-semibold text-lg mb-4">Who to follow</h3>
@@ -81,7 +87,7 @@ const Index = () => {
                     </div>
                   ) : suggestedUsers && suggestedUsers.length > 0 ? (
                     <div className="space-y-4">
-                      {suggestedUsers.map((user: any) => (
+                      {suggestedUsers.map((user: SuggestedUser) => (
                         <div key={user.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <img 
@@ -112,7 +118,6 @@ const Index = () => {
                 </div>
               )}
               
-              {/* Trending topics */}
               <div className="bg-white rounded-xl p-4 card-shadow animate-fade-in">
                 <h3 className="font-semibold text-lg mb-4">Trends for you</h3>
                 {isTrendingTopicsLoading ? (
@@ -121,7 +126,7 @@ const Index = () => {
                   </div>
                 ) : trendingTopics && trendingTopics.length > 0 ? (
                   <div className="space-y-4">
-                    {trendingTopics.map((topic: any) => (
+                    {trendingTopics.map((topic: TrendingTopic) => (
                       <div key={topic.id} className="group cursor-pointer">
                         <h4 className="font-medium group-hover:text-social-blue transition-colors">
                           {topic.name}
@@ -135,7 +140,6 @@ const Index = () => {
                 )}
               </div>
               
-              {/* Footer Links */}
               <div className="p-4 text-xs text-gray-500">
                 <div className="flex flex-wrap gap-2">
                   <a href="#" className="hover:underline">Terms of Service</a>

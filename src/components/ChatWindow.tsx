@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,8 +36,8 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Fetch conversation
-  const { data: conversation, isLoading: isConversationLoading } = useQuery({
+  // Fetch conversation with proper typing
+  const { data: conversation, isLoading: isConversationLoading } = useQuery<Conversation>({
     queryKey: ['conversation', conversationId],
     queryFn: async () => {
       return api.get<Conversation>(`/conversations/${conversationId}`);
@@ -46,8 +45,8 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
     enabled: !!conversationId
   });
   
-  // Fetch messages
-  const { data: messages, isLoading: isMessagesLoading } = useQuery({
+  // Fetch messages with proper typing
+  const { data: messages, isLoading: isMessagesLoading } = useQuery<Message[]>({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
       return api.get<Message[]>(`/conversations/${conversationId}/messages`);
@@ -56,7 +55,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   });
   
   // Send message mutation
-  const sendMessageMutation = useMutation({
+  const sendMessageMutation = useMutation<Message, Error, string>({
     mutationFn: async (content: string) => {
       return api.post<Message>(`/conversations/${conversationId}/messages`, { content });
     },

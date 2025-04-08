@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -9,21 +8,15 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-
-interface Post {
-  id: string;
-  content: string;
-  createdAt: string;
-  // Add other post properties as needed
-}
+import { Post } from '@/hooks/use-posts';
 
 const Profile = () => {
   const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
   const { data: profileUser, isLoading, error } = useUserByUsername(username || '');
   
-  // Fetch the user's posts
-  const { data: posts, isLoading: isPostsLoading } = useQuery({
+  // Fetch the user's posts with proper typing
+  const { data: posts, isLoading: isPostsLoading } = useQuery<Post[]>({
     queryKey: ['user-posts', profileUser?.id],
     queryFn: async () => {
       const response = await api.get<Post[]>(`/posts?user_id=${profileUser?.id}`);
@@ -99,7 +92,7 @@ const Profile = () => {
                   <Loader2 className="h-6 w-6 animate-spin text-social-blue" />
                   <span className="ml-2 text-gray-500">Loading posts...</span>
                 </div>
-              ) : posts && Array.isArray(posts) && posts.length > 0 ? (
+              ) : posts && posts.length > 0 ? (
                 <Feed />
               ) : (
                 <div className="bg-white rounded-xl p-8 text-center card-shadow">

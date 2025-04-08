@@ -5,7 +5,7 @@ import { User } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast";
 
 export const useUser = (userId: string) => {
-  return useQuery({
+  return useQuery<User>({
     queryKey: ["user", userId],
     queryFn: () => api.get<User>(`/users/${userId}`),
     enabled: !!userId,
@@ -13,7 +13,7 @@ export const useUser = (userId: string) => {
 };
 
 export const useUserByUsername = (username: string) => {
-  return useQuery({
+  return useQuery<User>({
     queryKey: ["user", "username", username],
     queryFn: () => api.get<User>(`/users/username/${username}`),
     enabled: !!username,
@@ -23,7 +23,7 @@ export const useUserByUsername = (username: string) => {
 export const useFollowUser = () => {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  return useMutation<void, Error, string>({
     mutationFn: (userId: string) => api.post<void>(`/users/follow/${userId}`),
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
@@ -42,7 +42,7 @@ export const useFollowUser = () => {
 export const useUnfollowUser = () => {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  return useMutation<void, Error, string>({
     mutationFn: (userId: string) => api.delete<void>(`/users/follow/${userId}`),
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
@@ -59,14 +59,14 @@ export const useUnfollowUser = () => {
 };
 
 export const useFollowers = (limit = 10) => {
-  return useQuery({
+  return useQuery<User[]>({
     queryKey: ["followers", limit],
     queryFn: () => api.get<User[]>(`/users/followers?limit=${limit}`),
   });
 };
 
 export const useFollowing = (limit = 10) => {
-  return useQuery({
+  return useQuery<User[]>({
     queryKey: ["following", limit],
     queryFn: () => api.get<User[]>(`/users/following?limit=${limit}`),
   });

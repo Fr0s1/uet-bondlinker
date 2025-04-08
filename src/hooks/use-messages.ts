@@ -30,12 +30,12 @@ export interface Conversation {
 export const useConversations = () => {
   const queryClient = useQueryClient();
   
-  const { data: conversations, isLoading, error } = useQuery({
+  const { data: conversations, isLoading, error } = useQuery<Conversation[]>({
     queryKey: ['conversations'],
     queryFn: () => api.get<Conversation[]>('/conversations'),
   });
   
-  const createConversation = useMutation({
+  const createConversation = useMutation<Conversation, Error, string>({
     mutationFn: (userId: string) => api.post<Conversation>('/conversations', { recipientId: userId }),
     onSuccess: (newConversation) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -56,7 +56,7 @@ export const useConversations = () => {
 };
 
 export const useConversation = (conversationId: string) => {
-  return useQuery({
+  return useQuery<Conversation>({
     queryKey: ['conversation', conversationId],
     queryFn: () => api.get<Conversation>(`/conversations/${conversationId}`),
     enabled: !!conversationId,
@@ -67,7 +67,7 @@ export const useMessages = (conversationId: string, limit = 50) => {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   
-  const { data: messages, isLoading, error } = useQuery({
+  const { data: messages, isLoading, error } = useQuery<Message[]>({
     queryKey: ['messages', conversationId, page, limit],
     queryFn: () => api.get<Message[]>(
       `/conversations/${conversationId}/messages?limit=${limit}&offset=${(page - 1) * limit}`
@@ -75,7 +75,7 @@ export const useMessages = (conversationId: string, limit = 50) => {
     enabled: !!conversationId,
   });
   
-  const sendMessage = useMutation({
+  const sendMessage = useMutation<Message, Error, string>({
     mutationFn: (content: string) => 
       api.post<Message>(`/conversations/${conversationId}/messages`, { content }),
     onSuccess: (newMessage) => {
@@ -84,7 +84,7 @@ export const useMessages = (conversationId: string, limit = 50) => {
     },
   });
   
-  const markAsRead = useMutation({
+  const markAsRead = useMutation<void, Error, void>({
     mutationFn: () => api.post<void>(`/conversations/${conversationId}/read`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -105,14 +105,16 @@ export const useMessages = (conversationId: string, limit = 50) => {
 export const useCreateDirectMessage = () => {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  interface CreateDirectMessageParams {
+    username: string; 
+    content: string;
+  }
+  
+  return useMutation<Conversation, Error, CreateDirectMessageParams>({
     mutationFn: async ({ 
       username, 
       content 
-    }: { 
-      username: string; 
-      content: string;
-    }) => {
+    }: CreateDirectMessageParams) => {
       // First get the user by username
       const user = await api.get<{ id: string }>(`/users/username/${username}`);
       

@@ -23,13 +23,13 @@ export const useComments = (postId: string, limit = 10) => {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Comment[]>({
     queryKey: ["comments", postId, page, limit],
     queryFn: () => api.get<Comment[]>(`/posts/${postId}/comments?limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: !!postId,
   });
   
-  const createComment = useMutation({
+  const createComment = useMutation<Comment, Error, CreateCommentData>({
     mutationFn: (comment: CreateCommentData) => api.post<Comment>(`/posts/${postId}/comments`, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -41,8 +41,13 @@ export const useComments = (postId: string, limit = 10) => {
     },
   });
   
-  const updateComment = useMutation({
-    mutationFn: ({ commentId, content }: { commentId: string; content: string }) => 
+  interface UpdateCommentParams {
+    commentId: string;
+    content: string;
+  }
+  
+  const updateComment = useMutation<Comment, Error, UpdateCommentParams>({
+    mutationFn: ({ commentId, content }: UpdateCommentParams) => 
       api.put<Comment>(`/posts/comments/${commentId}`, { content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -53,7 +58,7 @@ export const useComments = (postId: string, limit = 10) => {
     },
   });
   
-  const deleteComment = useMutation({
+  const deleteComment = useMutation<void, Error, string>({
     mutationFn: (commentId: string) => api.delete<void>(`/posts/comments/${commentId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });

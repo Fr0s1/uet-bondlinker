@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
@@ -30,8 +29,8 @@ interface ConversationListProps {
 const ConversationList = ({ selectedConversationId, onSelectConversation }: ConversationListProps) => {
   const { user } = useAuth();
   
-  // Fetch conversations
-  const { data: conversations, isLoading } = useQuery({
+  // Fetch conversations with proper typing
+  const { data: conversations, isLoading } = useQuery<Conversation[]>({
     queryKey: ['conversations'],
     queryFn: async () => {
       return api.get<Conversation[]>('/conversations');

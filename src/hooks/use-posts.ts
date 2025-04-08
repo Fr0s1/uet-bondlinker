@@ -27,12 +27,12 @@ export const usePosts = (limit = 10) => {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["posts", page, limit],
     queryFn: () => api.get<Post[]>(`/posts?limit=${limit}&offset=${(page - 1) * limit}`),
   });
   
-  const createPost = useMutation({
+  const createPost = useMutation<Post, Error, CreatePostData>({
     mutationFn: (newPost: CreatePostData) => api.post<Post>("/posts", newPost),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -43,7 +43,7 @@ export const usePosts = (limit = 10) => {
     },
   });
   
-  const likePost = useMutation({
+  const likePost = useMutation<void, Error, string>({
     mutationFn: (postId: string) => api.post<void>(`/posts/${postId}/like`),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -51,7 +51,7 @@ export const usePosts = (limit = 10) => {
     },
   });
   
-  const unlikePost = useMutation({
+  const unlikePost = useMutation<void, Error, string>({
     mutationFn: (postId: string) => api.delete<void>(`/posts/${postId}/like`),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -72,7 +72,7 @@ export const usePosts = (limit = 10) => {
 };
 
 export const usePost = (postId: string) => {
-  return useQuery({
+  return useQuery<Post>({
     queryKey: ["post", postId],
     queryFn: () => api.get<Post>(`/posts/${postId}`),
     enabled: !!postId,
@@ -82,7 +82,7 @@ export const usePost = (postId: string) => {
 export const useFeed = (limit = 10) => {
   const [page, setPage] = useState(1);
   
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["feed", page, limit],
     queryFn: () => api.get<Post[]>(`/posts/feed?limit=${limit}&offset=${(page - 1) * limit}`),
   });
