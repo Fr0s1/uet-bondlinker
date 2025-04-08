@@ -38,8 +38,12 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 	// Initialize controllers
 	userController := controller.NewUserController(repo, cfg)
-	postController := controller.NewPostController(repo, cfg)
 	authController := controller.NewAuthController(repo, cfg)
+	
+	// Initialize new separated post controllers
+	postController := controller.NewPostController(repo, cfg)
+	postInteractionController := controller.NewPostInteractionController(repo, cfg)
+	commentController := controller.NewCommentController(repo, cfg)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -86,15 +90,15 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			posts.POST("", postController.CreatePost)
 			posts.PUT("/:id", postController.UpdatePost)
 			posts.DELETE("/:id", postController.DeletePost)
-			posts.POST("/:id/like", postController.LikePost)
-			posts.DELETE("/:id/like", postController.UnlikePost)
+			posts.POST("/:id/like", postInteractionController.LikePost)
+			posts.DELETE("/:id/like", postInteractionController.UnlikePost)
 			posts.GET("/feed", postController.GetFeed)
 			
 			// Comment routes (nested under posts)
-			posts.GET("/:id/comments", postController.GetComments)
-			posts.POST("/:id/comments", postController.CreateComment)
-			posts.PUT("/comments/:commentId", postController.UpdateComment)
-			posts.DELETE("/comments/:commentId", postController.DeleteComment)
+			posts.GET("/:id/comments", commentController.GetComments)
+			posts.POST("/:id/comments", commentController.CreateComment)
+			posts.PUT("/comments/:commentId", commentController.UpdateComment)
+			posts.DELETE("/comments/:commentId", commentController.DeleteComment)
 		}
 	}
 

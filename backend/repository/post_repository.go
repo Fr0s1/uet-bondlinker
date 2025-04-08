@@ -165,3 +165,12 @@ func (r *PostRepo) IsLiked(userID, postID uuid.UUID) (bool, error) {
 	err := r.db.Model(&model.Like{}).Where("user_id = ? AND post_id = ?", userID, postID).Count(&count).Error
 	return count > 0, err
 }
+
+// CountLikes returns the number of likes for a post
+func (r *PostRepo) CountLikes(postID uuid.UUID) (int, error) {
+	var post model.Post
+	if err := r.db.Select("likes_count").First(&post, "id = ?", postID).Error; err != nil {
+		return 0, err
+	}
+	return post.LikesCount, nil
+}

@@ -36,6 +36,7 @@ type PostRepository interface {
 	Like(userID, postID uuid.UUID) error
 	Unlike(userID, postID uuid.UUID) error
 	IsLiked(userID, postID uuid.UUID) (bool, error)
+	CountLikes(postID uuid.UUID) (int, error)
 }
 
 // CommentRepository handles database operations related to comments
