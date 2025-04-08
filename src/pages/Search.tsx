@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Users, FileText } from 'lucide-react';
 import Post from '@/components/Post';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
@@ -12,24 +12,34 @@ import { useSearch, useSearchUsers, useSearchPosts } from '@/hooks/use-search';
 
 const Search = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const initialQuery = searchParams.get('q') || '';
+  const initialTab = searchParams.get('tab') || 'all';
   
   const [query, setQuery] = useState(initialQuery);
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(initialTab);
   
   const { results, isLoading } = useSearch(searchTerm);
   const { users, isLoading: isUsersLoading } = useSearchUsers(searchTerm);
   const { posts, isLoading: isPostsLoading } = useSearchPosts(searchTerm);
   
   useEffect(() => {
-    // Update the URL when search term changes
+    // Update the URL when search term or tab changes
     if (searchTerm) {
-      const newUrl = `/search?q=${encodeURIComponent(searchTerm)}`;
-      window.history.pushState({}, '', newUrl);
+      const newUrl = `/search?q=${encodeURIComponent(searchTerm)}${activeTab !== 'all' ? `&tab=${activeTab}` : ''}`;
+      navigate(newUrl, { replace: true });
     }
-  }, [searchTerm]);
+  }, [searchTerm, activeTab, navigate]);
+  
+  // Update active tab when URL tab param changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['all', 'people', 'posts'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +69,10 @@ const Search = () => {
         <>
           {results.users.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-lg font-bold mb-4">People</h3>
+              <div className="flex items-center mb-4">
+                <Users className="mr-2 h-5 w-5 text-social-blue" />
+                <h3 className="text-lg font-bold">People</h3>
+              </div>
               <div className="space-y-4">
                 {results.users.slice(0, 3).map((user) => (
                   <Link 
@@ -92,7 +105,10 @@ const Search = () => {
           
           {results.posts.length > 0 && (
             <div>
-              <h3 className="text-lg font-bold mb-4">Posts</h3>
+              <div className="flex items-center mb-4">
+                <FileText className="mr-2 h-5 w-5 text-social-blue" />
+                <h3 className="text-lg font-bold">Posts</h3>
+              </div>
               <div className="space-y-4">
                 {results.posts.slice(0, 3).map((post) => (
                   <Post 
@@ -244,15 +260,17 @@ const Search = () => {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Search for people or posts..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1"
-          />
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search for people or posts..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
           <Button type="submit">
-            <SearchIcon className="h-4 w-4 mr-2" />
             Search
           </Button>
         </div>
