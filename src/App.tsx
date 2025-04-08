@@ -26,7 +26,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="app-container">
       {!isAuthPage && <Navbar />}
-      <main>
+      <main className={!isAuthPage ? "container py-4" : ""}>
         {children}
       </main>
     </div>
