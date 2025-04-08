@@ -1,4 +1,3 @@
-
 package config
 
 import (
@@ -15,6 +14,7 @@ type Config struct {
 
 // ServerConfig holds server-specific configuration
 type ServerConfig struct {
+	Host string
 	Port string
 	Env  string
 }
@@ -44,6 +44,7 @@ func New() *Config {
 
 	return &Config{
 		Server: ServerConfig{
+			Host: getEnv("HOST", "0.0.0.0"),
 			Port: getEnv("PORT", "8080"),
 			Env:  getEnv("ENV", "development"),
 		},

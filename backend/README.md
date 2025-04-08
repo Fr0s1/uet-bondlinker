@@ -1,4 +1,3 @@
-
 # SocialNet Backend
 
 This is the backend server for the SocialNet social media application, built with Go, Gin, and PostgreSQL.

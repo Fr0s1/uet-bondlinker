@@ -1,9 +1,6 @@
 package controller
 
 import (
-	"socialnet/config"
-	"socialnet/repository"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,11 +13,11 @@ type PostControllerInterface interface {
 	UpdatePost(c *gin.Context)
 	DeletePost(c *gin.Context)
 	GetFeed(c *gin.Context)
-	
+
 	// Post interaction operations
 	LikePost(c *gin.Context)
 	UnlikePost(c *gin.Context)
-	
+
 	// Comment operations
 	GetComments(c *gin.Context)
 	CreateComment(c *gin.Context)

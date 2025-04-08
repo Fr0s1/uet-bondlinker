@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -31,7 +30,7 @@ func (r *PostRepo) FindByID(id uuid.UUID) (*model.Post, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &post, nil
 }
 
@@ -74,7 +73,7 @@ func (r *PostRepo) Delete(id uuid.UUID) error {
 func (r *PostRepo) FindAll(filter model.PostFilter) ([]model.Post, error) {
 	var posts []model.Post
 	query := r.db.Preload("Author").Order("created_at DESC").Limit(filter.Limit).Offset(filter.Offset)
-	
+
 	// Filter by user if userID is provided
 	if filter.UserID != "" {
 		userID, err := uuid.Parse(filter.UserID)
@@ -82,7 +81,7 @@ func (r *PostRepo) FindAll(filter model.PostFilter) ([]model.Post, error) {
 			query = query.Where("user_id = ?", userID)
 		}
 	}
-	
+
 	err := query.Find(&posts).Error
 	return posts, err
 }
@@ -90,7 +89,7 @@ func (r *PostRepo) FindAll(filter model.PostFilter) ([]model.Post, error) {
 // FindFeed finds posts for a user's feed (posts from followed users and own posts)
 func (r *PostRepo) FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.Post, error) {
 	var posts []model.Post
-	
+
 	// Get posts from followed users and own posts using a single join
 	err := r.db.Preload("Author").
 		Distinct("posts.*").
@@ -101,7 +100,7 @@ func (r *PostRepo) FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.
 		Order("posts.created_at DESC").
 		Limit(filter.Limit).Offset(filter.Offset).
 		Find(&posts).Error
-	
+
 	return posts, err
 }
 
@@ -117,19 +116,19 @@ func (r *PostRepo) Like(userID, postID uuid.UUID) error {
 		UserID: userID,
 		PostID: postID,
 	}
-	
+
 	// Create like
 	if err := tx.Create(&like).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	// Increment post's likes_count
 	if err := tx.Model(&model.Post{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count + 1")).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	return tx.Commit().Error
 }
 
@@ -140,14 +139,14 @@ func (r *PostRepo) Unlike(userID, postID uuid.UUID) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-	
+
 	// Delete like
 	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&model.Like{})
 	if result.Error != nil {
 		tx.Rollback()
 		return result.Error
 	}
-	
+
 	// If like was found and deleted, decrement counter
 	if result.RowsAffected > 0 {
 		if err := tx.Model(&model.Post{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count - 1")).Error; err != nil {
@@ -155,7 +154,7 @@ func (r *PostRepo) Unlike(userID, postID uuid.UUID) error {
 			return err
 		}
 	}
-	
+
 	return tx.Commit().Error
 }
 

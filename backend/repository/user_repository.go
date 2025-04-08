@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -32,16 +31,16 @@ func (r *UserRepo) FindByID(id uuid.UUID) (*model.User, error) {
 
 // FindByEmail finds a user by email
 func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
-	var user model.User
-	err := r.db.Where("email = ?", email).First(&user).Error
-	return &user, err
+	var user *model.User
+	err := r.db.Where("email = ?", email).Limit(1).Scan(&user).Error
+	return user, err
 }
 
 // FindByUsername finds a user by username
 func (r *UserRepo) FindByUsername(username string) (*model.User, error) {
-	var user model.User
-	err := r.db.Where("username = ?", username).First(&user).Error
-	return &user, err
+	var user *model.User
+	err := r.db.Where("username = ?", username).Limit(1).Scan(&user).Error
+	return user, err
 }
 
 // Update updates a user in the database
@@ -53,11 +52,11 @@ func (r *UserRepo) Update(user *model.User) error {
 func (r *UserRepo) FindAll(filter model.UserFilter) ([]model.User, error) {
 	var users []model.User
 	db := r.db
-	
+
 	if filter.Query != "" {
 		db = db.Where("name ILIKE ? OR username ILIKE ?", "%"+filter.Query+"%", "%"+filter.Query+"%")
 	}
-	
+
 	err := db.Limit(filter.Limit).Offset(filter.Offset).Order("created_at DESC").Find(&users).Error
 	return users, err
 }
@@ -141,7 +140,7 @@ func (r *UserRepo) GetFollowers(userID uuid.UUID, filter model.FollowFilter) ([]
 		Limit(filter.Limit).Offset(filter.Offset).
 		Order("follows.created_at DESC").
 		Find(&users).Error
-	
+
 	return users, err
 }
 
@@ -155,7 +154,7 @@ func (r *UserRepo) GetFollowing(userID uuid.UUID, filter model.FollowFilter) ([]
 		Limit(filter.Limit).Offset(filter.Offset).
 		Order("follows.created_at DESC").
 		Find(&users).Error
-	
+
 	return users, err
 }
 

@@ -1,4 +1,3 @@
-
 package model
 
 // Pagination represents common pagination parameters
@@ -9,7 +8,7 @@ type Pagination struct {
 
 // UserFilter represents user filtering parameters
 type UserFilter struct {
-	Query     string `form:"q"`
+	Query string `form:"q"`
 	Pagination
 }
 

@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -13,10 +12,7 @@ import (
 
 func main() {
 	// Load configuration
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
+	cfg := config.New()
 
 	// Connect to the database
 	db, err := database.ConnectDB(cfg)
@@ -35,7 +31,7 @@ func main() {
 	// Start server
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 	log.Printf("Server running on %s", addr)
-	
+
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 		os.Exit(1)

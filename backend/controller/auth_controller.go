@@ -1,16 +1,13 @@
-
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
 	"socialnet/config"
 	"socialnet/model"
 	"socialnet/repository"
 	"socialnet/util"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // AuthController handles authentication-related requests

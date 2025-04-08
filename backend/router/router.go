@@ -1,4 +1,3 @@
-
 package router
 
 import (
@@ -39,7 +38,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// Initialize controllers
 	userController := controller.NewUserController(repo, cfg)
 	authController := controller.NewAuthController(repo, cfg)
-	
+
 	// Initialize new separated post controllers
 	postController := controller.NewPostController(repo, cfg)
 	postInteractionController := controller.NewPostInteractionController(repo, cfg)
@@ -68,7 +67,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			users.GET("", userController.GetUsers)
 			users.GET("/:id", userController.GetUser)
 			users.GET("/username/:username", userController.GetUserByUsername)
-			
+
 			// Protected routes
 			users.Use(middleware.AuthMiddleware(cfg))
 			users.PUT("/:id", userController.UpdateUser)
@@ -84,7 +83,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		{
 			posts.GET("", postController.GetPosts)
 			posts.GET("/:id", postController.GetPost)
-			
+
 			// Protected routes
 			posts.Use(middleware.AuthMiddleware(cfg))
 			posts.POST("", postController.CreatePost)
@@ -93,7 +92,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			posts.POST("/:id/like", postInteractionController.LikePost)
 			posts.DELETE("/:id/like", postInteractionController.UnlikePost)
 			posts.GET("/feed", postController.GetFeed)
-			
+
 			// Comment routes (nested under posts)
 			posts.GET("/:id/comments", commentController.GetComments)
 			posts.POST("/:id/comments", commentController.CreateComment)

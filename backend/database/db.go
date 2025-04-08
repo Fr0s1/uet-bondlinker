@@ -1,4 +1,3 @@
-
 package database
 
 import (
@@ -37,7 +36,7 @@ func ConnectDB(cfg *config.Config) (*gorm.DB, error) {
 // RunMigrations runs all database migrations using GORM
 func RunMigrations(db *gorm.DB) error {
 	log.Println("Running database migrations...")
-	
+
 	// AutoMigrate will create tables, foreign keys, constraints, etc.
 	err := db.AutoMigrate(
 		&model.User{},
@@ -46,16 +45,16 @@ func RunMigrations(db *gorm.DB) error {
 		&model.Follow{},
 		&model.Like{},
 	)
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if counters need to be initialized
 	if err := updateCountersIfNeeded(db); err != nil {
 		log.Printf("Warning: Failed to update counters: %v", err)
 	}
-	
+
 	log.Println("Migrations completed successfully.")
 	return nil
 }
@@ -74,7 +73,7 @@ func updateCountersIfNeeded(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	
+
 	// Update following count
 	if err := db.Exec(`
 		UPDATE users u
@@ -87,7 +86,7 @@ func updateCountersIfNeeded(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	
+
 	// Update post counts
 	if err := db.Exec(`
 		UPDATE users u
@@ -100,7 +99,7 @@ func updateCountersIfNeeded(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	
+
 	// Update likes count for posts
 	if err := db.Exec(`
 		UPDATE posts p
@@ -113,7 +112,7 @@ func updateCountersIfNeeded(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	
+
 	// Update comments count for posts
 	if err := db.Exec(`
 		UPDATE posts p
@@ -126,6 +125,6 @@ func updateCountersIfNeeded(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	
+
 	return nil
 }

@@ -1,4 +1,3 @@
-
 package model
 
 import (
@@ -26,7 +25,7 @@ type User struct {
 	UpdatedAt      time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
 	DeletedAt      gorm.DeletedAt `json:"-" gorm:"index"`
 	IsFollowed     *bool          `json:"is_followed,omitempty" gorm:"-"`
-	
+
 	// Relations
 	Posts    []Post    `json:"-" gorm:"foreignKey:UserID"`
 	Likes    []Like    `json:"-" gorm:"foreignKey:UserID"`
@@ -75,7 +74,7 @@ type Follow struct {
 	FollowerID  uuid.UUID `json:"follower_id" gorm:"type:uuid;primaryKey"`
 	FollowingID uuid.UUID `json:"following_id" gorm:"type:uuid;primaryKey"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
-	
+
 	// Relations
 	Follower  User `json:"-" gorm:"foreignKey:FollowerID"`
 	Following User `json:"-" gorm:"foreignKey:FollowingID"`

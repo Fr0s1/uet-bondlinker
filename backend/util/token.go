@@ -1,4 +1,3 @@
-
 package util
 
 import (
@@ -12,14 +11,14 @@ import (
 func GenerateToken(userID, secret string, expiry time.Duration) (string, error) {
 	tokenID := uuid.New().String()
 	now := time.Now()
-	
+
 	claims := jwt.MapClaims{
-		"sub": userID,         // Subject (the user ID)
-		"jti": tokenID,        // JWT ID (unique identifier for this token)
-		"iat": now.Unix(),     // Issued At
-		"nbf": now.Unix(),     // Not Before
+		"sub": userID,                 // Subject (the user ID)
+		"jti": tokenID,                // JWT ID (unique identifier for this token)
+		"iat": now.Unix(),             // Issued At
+		"nbf": now.Unix(),             // Not Before
 		"exp": now.Add(expiry).Unix(), // Expiration Time
-		"iss": "socialnet",    // Issuer
+		"iss": "socialnet",            // Issuer
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -35,11 +34,11 @@ func ValidateToken(tokenString, secret string) (string, error) {
 		}
 		return []byte(secret), nil
 	})
-	
+
 	if err != nil {
 		return "", err
 	}
-	
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		// Check if token is expired
 		if exp, ok := claims["exp"].(float64); ok {
@@ -47,12 +46,12 @@ func ValidateToken(tokenString, secret string) (string, error) {
 				return "", jwt.ErrTokenExpired
 			}
 		}
-		
+
 		// Return the user ID (subject)
 		if sub, ok := claims["sub"].(string); ok {
 			return sub, nil
 		}
 	}
-	
-	return "", jwt.ErrTokenInvalid
+
+	return "", jwt.ErrTokenSignatureInvalid
 }

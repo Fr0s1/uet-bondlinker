@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -25,19 +24,19 @@ func (r *CommentRepo) Create(comment *model.Comment) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-	
+
 	// Create comment
 	if err := tx.Create(comment).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	// Increment post's comments_count
 	if err := tx.Model(&model.Post{}).Where("id = ?", comment.PostID).Update("comments_count", gorm.Expr("comments_count + 1")).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	return tx.Commit().Error
 }
 
@@ -64,26 +63,26 @@ func (r *CommentRepo) Delete(id uuid.UUID) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-	
+
 	// Get comment to get post ID for counter update
 	var comment model.Comment
 	if err := tx.First(&comment, "id = ?", id).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	// Delete comment
 	if err := tx.Delete(&model.Comment{}, "id = ?", id).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	// Decrement post's comments_count
 	if err := tx.Model(&model.Post{}).Where("id = ?", comment.PostID).Update("comments_count", gorm.Expr("comments_count - 1")).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	return tx.Commit().Error
 }
 
@@ -96,6 +95,6 @@ func (r *CommentRepo) FindByPostID(postID uuid.UUID, filter model.Pagination) ([
 		Order("created_at DESC").
 		Limit(filter.Limit).Offset(filter.Offset).
 		Find(&comments).Error
-	
+
 	return comments, err
 }
