@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -100,7 +99,6 @@ const Post = ({
       queryClient.invalidateQueries({ queryKey: ['trending'] });
     },
     onError: () => {
-      // Revert optimistic update on error
       setLiked(!liked);
       setLikeCount(prev => liked ? prev + 1 : prev - 1);
       toast({
@@ -119,7 +117,6 @@ const Post = ({
       queryClient.invalidateQueries({ queryKey: ['trending'] });
     },
     onError: () => {
-      // Revert optimistic update on error
       setLiked(!liked);
       setLikeCount(prev => liked ? prev - 1 : prev + 1);
       toast({
@@ -174,7 +171,6 @@ const Post = ({
     }
   });
   
-  // Fixed like toggle function
   const handleLike = () => {
     if (!isAuthenticated) {
       toast({
@@ -185,7 +181,6 @@ const Post = ({
       return;
     }
     
-    // Optimistic update
     setLiked(!liked);
     setLikeCount(prev => liked ? prev - 1 : prev + 1);
     
@@ -283,12 +278,13 @@ const Post = ({
         </div>
         
         <div className="mt-3 text-left">
-          <ReactMarkdown className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
+          <div className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
         
-        {/* Shared post */}
         {sharedPost && (
           <div className="mt-3 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center space-x-2">
@@ -302,9 +298,11 @@ const Post = ({
               </div>
             </div>
             <div className="mt-2">
-              <ReactMarkdown className="text-gray-800 text-sm prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
-                {sharedPost.content}
-              </ReactMarkdown>
+              <div className="text-gray-800 text-sm prose prose-sm max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {sharedPost.content}
+                </ReactMarkdown>
+              </div>
             </div>
             {sharedPost.image && (
               <div className="mt-2 rounded-lg overflow-hidden">
@@ -404,9 +402,11 @@ const Post = ({
                 <span className="text-sm font-medium">{author.name}</span>
               </div>
               <div className="text-sm mt-2 line-clamp-2">
-                <ReactMarkdown className="prose prose-sm max-w-none" remarkPlugins={[remarkGfm]}>
-                  {content}
-                </ReactMarkdown>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </div>
