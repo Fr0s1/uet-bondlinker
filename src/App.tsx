@@ -42,14 +42,11 @@ function App() {
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/trending" element={<Trending />} />
-                <Route
-                  path="/messages"
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/messages" element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
