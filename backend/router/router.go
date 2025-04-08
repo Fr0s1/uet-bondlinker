@@ -2,19 +2,20 @@
 package router
 
 import (
-	"database/sql"
 	"net/http"
 
 	"socialnet/config"
-	"socialnet/middleware"
 	"socialnet/controller"
+	"socialnet/middleware"
+	"socialnet/repository"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // SetupRouter configures the Gin router
-func SetupRouter(db *sql.DB, cfg *config.Config) *gin.Engine {
+func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// Set Gin mode
 	if cfg.Server.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -32,10 +33,13 @@ func SetupRouter(db *sql.DB, cfg *config.Config) *gin.Engine {
 		MaxAge:           86400,
 	}))
 
+	// Initialize repositories
+	repo := repository.NewRepository(db)
+
 	// Initialize controllers
-	userController := controller.NewUserController(db, cfg)
-	postController := controller.NewPostController(db, cfg)
-	authController := controller.NewAuthController(db, cfg)
+	userController := controller.NewUserController(repo, cfg)
+	postController := controller.NewPostController(repo, cfg)
+	authController := controller.NewAuthController(repo, cfg)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {

@@ -3,24 +3,41 @@ package model
 
 import (
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // User represents a user in the system
 type User struct {
-	ID         string     `json:"id"`
-	Name       string     `json:"name"`
-	Username   string     `json:"username"`
-	Email      string     `json:"email"`
-	Password   string     `json:"-"` // Password is never sent to client
-	Bio        *string    `json:"bio,omitempty"`
-	Avatar     *string    `json:"avatar,omitempty"`
-	Location   *string    `json:"location,omitempty"`
-	Website    *string    `json:"website,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	Followers  int        `json:"followers,omitempty"`
-	Following  int        `json:"following,omitempty"`
-	IsFollowed *bool      `json:"is_followed,omitempty"`
+	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Name       string         `json:"name" gorm:"size:100;not null"`
+	Username   string         `json:"username" gorm:"size:50;not null;uniqueIndex"`
+	Email      string         `json:"email" gorm:"size:100;not null;uniqueIndex"`
+	Password   string         `json:"-" gorm:"column:password_hash;size:255;not null"`
+	Bio        *string        `json:"bio,omitempty" gorm:"type:text"`
+	Avatar     *string        `json:"avatar,omitempty" gorm:"size:255"`
+	Location   *string        `json:"location,omitempty" gorm:"size:100"`
+	Website    *string        `json:"website,omitempty" gorm:"size:255"`
+	CreatedAt  time.Time      `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt  time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
+	Followers  int            `json:"followers,omitempty" gorm:"-"`
+	Following  int            `json:"following,omitempty" gorm:"-"`
+	IsFollowed *bool          `json:"is_followed,omitempty" gorm:"-"`
+	
+	// Relations
+	Posts    []Post    `json:"-" gorm:"foreignKey:UserID"`
+	Likes    []Like    `json:"-" gorm:"foreignKey:UserID"`
+	Comments []Comment `json:"-" gorm:"foreignKey:UserID"`
+}
+
+// BeforeCreate will set a UUID rather than numeric ID.
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.ID == uuid.Nil {
+		u.ID = uuid.New()
+	}
+	return nil
 }
 
 // UserRegistration represents data needed to register a new user
@@ -50,4 +67,15 @@ type UserUpdate struct {
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
+}
+
+// Follow represents a follow relationship between users
+type Follow struct {
+	FollowerID  uuid.UUID `json:"follower_id" gorm:"type:uuid;primaryKey"`
+	FollowingID uuid.UUID `json:"following_id" gorm:"type:uuid;primaryKey"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	
+	// Relations
+	Follower  User `json:"-" gorm:"foreignKey:FollowerID"`
+	Following User `json:"-" gorm:"foreignKey:FollowingID"`
 }

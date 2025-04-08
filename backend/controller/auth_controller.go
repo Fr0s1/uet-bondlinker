@@ -2,13 +2,12 @@
 package controller
 
 import (
-	"database/sql"
 	"net/http"
-	"time"
-
 	"socialnet/config"
 	"socialnet/model"
+	"socialnet/repository"
 	"socialnet/util"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -16,15 +15,15 @@ import (
 
 // AuthController handles authentication-related requests
 type AuthController struct {
-	db  *sql.DB
-	cfg *config.Config
+	repo *repository.Repository
+	cfg  *config.Config
 }
 
 // NewAuthController creates a new AuthController
-func NewAuthController(db *sql.DB, cfg *config.Config) *AuthController {
+func NewAuthController(repo *repository.Repository, cfg *config.Config) *AuthController {
 	return &AuthController{
-		db:  db,
-		cfg: cfg,
+		repo: repo,
+		cfg:  cfg,
 	}
 }
 
@@ -38,26 +37,15 @@ func (ac *AuthController) Register(c *gin.Context) {
 	}
 
 	// Check if email already exists
-	var count int
-	err := ac.db.QueryRow("SELECT COUNT(*) FROM users WHERE email = $1", input.Email).Scan(&count)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		return
-	}
-
-	if count > 0 {
+	existingUser, _ := ac.repo.User.FindByEmail(input.Email)
+	if existingUser != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
 		return
 	}
 
 	// Check if username already exists
-	err = ac.db.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", input.Username).Scan(&count)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		return
-	}
-
-	if count > 0 {
+	existingUser, _ = ac.repo.User.FindByUsername(input.Username)
+	if existingUser != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Username already in use"})
 		return
 	}
@@ -69,37 +57,27 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Generate UUID for the user
-	userID := uuid.New().String()
+	// Create new user
+	user := model.User{
+		ID:       uuid.New(),
+		Name:     input.Name,
+		Username: input.Username,
+		Email:    input.Email,
+		Password: hashedPassword,
+	}
 
 	// Save user to database
-	now := time.Now()
-	_, err = ac.db.Exec(
-		`INSERT INTO users (id, name, username, email, password_hash, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		userID, input.Name, input.Username, input.Email, hashedPassword, now, now,
-	)
-
+	err = ac.repo.User.Create(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
 	// Generate JWT token
-	token, err := util.GenerateToken(userID, ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
+	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
-	}
-
-	// Return response
-	user := model.User{
-		ID:        userID,
-		Name:      input.Name,
-		Username:  input.Username,
-		Email:     input.Email,
-		CreatedAt: now,
-		UpdatedAt: now,
 	}
 
 	c.JSON(http.StatusCreated, model.AuthResponse{
@@ -118,35 +96,20 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	// Get user from database
-	var user model.User
-	var passwordHash string
-
-	err := ac.db.QueryRow(
-		`SELECT id, name, username, email, password_hash, created_at, updated_at 
-		FROM users WHERE email = $1`,
-		input.Email,
-	).Scan(
-		&user.ID, &user.Name, &user.Username, &user.Email,
-		&passwordHash, &user.CreatedAt, &user.UpdatedAt,
-	)
-
+	user, err := ac.repo.User.FindByEmail(input.Email)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
 	// Verify password
-	if !util.CheckPasswordHash(input.Password, passwordHash) {
+	if !util.CheckPasswordHash(input.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
 	// Generate JWT token
-	token, err := util.GenerateToken(user.ID, ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
+	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -154,6 +117,6 @@ func (ac *AuthController) Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model.AuthResponse{
 		Token: token,
-		User:  user,
+		User:  *user,
 	})
 }

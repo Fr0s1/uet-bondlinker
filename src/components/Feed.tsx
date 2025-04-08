@@ -1,23 +1,27 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Post from './Post';
 import { usePosts, useFeed, Post as PostType } from '@/hooks/use-posts';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface FeedProps {
   type?: 'public' | 'personal';
+  userId?: string;
 }
 
-const Feed = ({ type = 'public' }: FeedProps) => {
+const Feed = ({ type = 'public', userId }: FeedProps) => {
   const { isAuthenticated } = useAuth();
-  const { posts: publicPosts, isLoading: isPublicLoading } = usePosts();
-  const { posts: personalPosts, isLoading: isPersonalLoading } = useFeed();
+  const { posts: publicPosts, isLoading: isPublicLoading, page: publicPage, setPage: setPublicPage } = usePosts(userId);
+  const { posts: personalPosts, isLoading: isPersonalLoading, page: feedPage, setPage: setFeedPage } = useFeed();
   
   const posts = type === 'personal' && isAuthenticated ? personalPosts : publicPosts;
   const isLoading = type === 'personal' && isAuthenticated ? isPersonalLoading : isPublicLoading;
+  const page = type === 'personal' && isAuthenticated ? feedPage : publicPage;
+  const setPage = type === 'personal' && isAuthenticated ? setFeedPage : setPublicPage;
   
-  if (isLoading) {
+  if (isLoading && page === 1) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-social-blue" />
@@ -26,7 +30,7 @@ const Feed = ({ type = 'public' }: FeedProps) => {
     );
   }
   
-  if (posts.length === 0) {
+  if (posts.length === 0 && !isLoading) {
     return (
       <div className="bg-white rounded-xl p-8 text-center card-shadow my-4">
         <h3 className="text-lg font-medium text-gray-700">No posts yet</h3>
@@ -60,6 +64,26 @@ const Feed = ({ type = 'public' }: FeedProps) => {
           isLiked={post.is_liked}
         />
       ))}
+      
+      {posts.length > 0 && (
+        <div className="flex justify-center my-4">
+          <Button
+            variant="outline"
+            className="mx-auto"
+            onClick={() => setPage(prevPage => prevPage + 1)}
+            disabled={isLoading || posts.length < 10}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              'Load more'
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
