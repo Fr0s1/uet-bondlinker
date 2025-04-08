@@ -2,7 +2,6 @@ package repository
 
 import (
 	"socialnet/model"
-	"socialnet/util"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
