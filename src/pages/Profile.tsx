@@ -10,6 +10,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
+interface Post {
+  id: string;
+  content: string;
+  createdAt: string;
+  // Add other post properties as needed
+}
+
 const Profile = () => {
   const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
@@ -18,7 +25,10 @@ const Profile = () => {
   // Fetch the user's posts
   const { data: posts, isLoading: isPostsLoading } = useQuery({
     queryKey: ['user-posts', profileUser?.id],
-    queryFn: () => api.get(`/posts?user_id=${profileUser?.id}`),
+    queryFn: async () => {
+      const response = await api.get<Post[]>(`/posts?user_id=${profileUser?.id}`);
+      return response;
+    },
     enabled: !!profileUser?.id,
   });
   
@@ -89,7 +99,7 @@ const Profile = () => {
                   <Loader2 className="h-6 w-6 animate-spin text-social-blue" />
                   <span className="ml-2 text-gray-500">Loading posts...</span>
                 </div>
-              ) : posts && posts.length > 0 ? (
+              ) : posts && Array.isArray(posts) && posts.length > 0 ? (
                 <Feed />
               ) : (
                 <div className="bg-white rounded-xl p-8 text-center card-shadow">
