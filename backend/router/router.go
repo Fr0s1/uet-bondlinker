@@ -49,6 +49,9 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// Initialize search controller
 	searchController := controller.NewSearchController(repo, cfg)
 
+	// Initialize message controller
+	messageController := controller.NewMessageController(repo, cfg)
+
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -122,6 +125,18 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			search.GET("", searchController.Search)
 			search.GET("/users", searchController.SearchUsers)
 			search.GET("/posts", searchController.SearchPosts)
+		}
+
+		// Message routes
+		conversations := v1.Group("/conversations")
+		{
+			conversations.Use(middleware.AuthMiddleware(cfg))
+			conversations.GET("", messageController.GetConversations)
+			conversations.POST("", messageController.CreateConversation)
+			conversations.GET("/:id", messageController.GetConversation)
+			conversations.GET("/:id/messages", messageController.GetMessages)
+			conversations.POST("/:id/messages", messageController.CreateMessage)
+			conversations.POST("/:id/read", messageController.MarkConversationAsRead)
 		}
 	}
 

@@ -25,10 +25,10 @@ const MessageBubble = ({ message, isCurrentUser }: MessageBubbleProps) => {
             : 'bg-white border border-gray-200 rounded-tl-none'
         }`}
       >
-        <p className={`text-sm ${isCurrentUser ? 'text-white' : 'text-gray-800'}`}>
+        <p className={`text-sm ${isCurrentUser ? 'text-white' : 'text-gray-800'} text-left`}>
           {message.content}
         </p>
-        <div className={`text-xs mt-1 ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'}`}>
+        <div className={`text-xs mt-1 ${isCurrentUser ? 'text-blue-100' : 'text-gray-500'} text-left`}>
           {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
         </div>
       </div>

@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
 import { useFollowUser, useUnfollowUser } from '@/hooks/use-users';
+import ChatButton from './ChatButton';
 
 interface UserProfileProps {
   user: {
@@ -199,30 +200,35 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
             )}
           </div>
           
-          {isCurrentUser ? (
-            <Button variant="outline" className="mb-2" onClick={() => setIsEditDialogOpen(true)}>
-              Edit Profile
-            </Button>
-          ) : (
-            <Button 
-              variant={isFollowing ? "outline" : "default"} 
-              className={isFollowing ? "mb-2" : "mb-2 gradient-blue"}
-              onClick={handleFollowToggle}
-              disabled={followMutation.isPending || unfollowMutation.isPending}
-            >
-              {isFollowing ? (
-                <>
-                  <UserCheck className="h-4 w-4 mr-1" />
-                  Following
-                </>
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  Follow
-                </>
-              )}
-            </Button>
-          )}
+          <div className="flex space-x-2 mb-2">
+            {isCurrentUser ? (
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant={isFollowing ? "outline" : "default"} 
+                  className={isFollowing ? "" : "gradient-blue"}
+                  onClick={handleFollowToggle}
+                  disabled={followMutation.isPending || unfollowMutation.isPending}
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserCheck className="h-4 w-4 mr-1" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Follow
+                    </>
+                  )}
+                </Button>
+                <ChatButton username={user.username} userId={user.id} />
+              </>
+            )}
+          </div>
         </div>
         
         <div>

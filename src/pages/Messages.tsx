@@ -16,7 +16,7 @@ const Messages = () => {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="container py-12">
-          <div className="bg-white rounded-xl p-8 text-center card-shadow">
+          <div className="bg-white rounded-xl p-8 text-left card-shadow">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Please login</h2>
             <p className="text-gray-600">You need to be logged in to access messages.</p>
           </div>
