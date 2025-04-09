@@ -29,117 +29,91 @@ func NewNotificationController(repo *repository.Repository, cfg *config.Config) 
 
 // GetNotifications returns a list of notifications for the current user
 func (nc *NotificationController) GetNotifications(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
-		return
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
 
 	var filter model.NotificationFilter
-	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if !middleware.BindQuery(c, &filter) {
 		return
 	}
 
 	// Query notifications from database
 	notifications, err := nc.repo.Notification.FindByUserID(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch notifications")
 		return
 	}
 
-	c.JSON(http.StatusOK, notifications)
+	util.RespondWithSuccess(c, http.StatusOK, "Notifications retrieved successfully", notifications)
 }
 
 // GetUnreadCount returns the count of unread notifications
 func (nc *NotificationController) GetUnreadCount(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
-		return
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
 
 	// Get unread count
 	count, err := nc.repo.Notification.CountUnread(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count notifications"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to count notifications")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"count": count})
+	util.RespondWithSuccess(c, http.StatusOK, "Unread notification count retrieved", gin.H{"count": count})
 }
 
 // MarkAsRead marks a notification as read
 func (nc *NotificationController) MarkAsRead(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
 
-	notificationIDStr := c.Param("id")
-	notificationID, err := uuid.Parse(notificationIDStr)
+	notificationID, err := middleware.ParseUUIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid notification ID"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid notification ID")
 		return
 	}
 
 	// Get notification to verify ownership
 	notification, err := nc.repo.Notification.FindByID(notificationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Notification not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Notification not found")
 		return
 	}
 
 	// Verify notification belongs to user
-	userID, _ := uuid.Parse(userIDStr)
-	if notification.UserID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot access this notification"})
+	if !middleware.CheckResourceOwnership(c, notification.UserID, userID) {
 		return
 	}
 
 	// Mark as read
 	err = nc.repo.Notification.MarkAsRead(notificationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark notification as read"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to mark notification as read")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Notification marked as read"})
+	util.RespondWithSuccess(c, http.StatusOK, "Notification marked as read", nil)
 }
 
 // MarkAllAsRead marks all notifications for the current user as read
 func (nc *NotificationController) MarkAllAsRead(c *gin.Context) {
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
-		return
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
 
 	// Mark all as read
-	err = nc.repo.Notification.MarkAllAsRead(userID)
+	err := nc.repo.Notification.MarkAllAsRead(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark notifications as read"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to mark notifications as read")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "All notifications marked as read"})
+	util.RespondWithSuccess(c, http.StatusOK, "All notifications marked as read", nil)
 }
