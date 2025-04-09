@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"socialnet/config"
 	"socialnet/model"
+	"socialnet/util"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -34,5 +35,12 @@ func RunMigrations(db *gorm.DB) error {
 		&model.Share{},
 		&model.Message{},
 		&model.Conversation{},
+		&model.Notification{}, // Add notification model
 	)
+}
+
+// SetupApplication performs additional setup tasks
+func SetupApplication(cfg *config.Config) error {
+	// Ensure email templates directory exists
+	return util.EnsureEmailTemplatesDir()
 }

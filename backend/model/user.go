@@ -1,3 +1,4 @@
+
 package model
 
 import (
@@ -18,6 +19,7 @@ type User struct {
 	Avatar         *string        `json:"avatar,omitempty" gorm:"size:255"`
 	Location       *string        `json:"location,omitempty" gorm:"size:100"`
 	Website        *string        `json:"website,omitempty" gorm:"size:255"`
+	EmailVerified  bool           `json:"email_verified" gorm:"default:false"`
 	FollowersCount int            `json:"followers" gorm:"default:0"`
 	FollowingCount int            `json:"following" gorm:"default:0"`
 	PostsCount     int            `json:"posts_count" gorm:"default:0"`

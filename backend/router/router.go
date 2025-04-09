@@ -52,6 +52,9 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// Initialize message controller
 	messageController := controller.NewMessageController(repo, cfg)
 
+	// Initialize notification controller
+	notificationController := controller.NewNotificationController(repo, cfg)
+
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -67,6 +70,9 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", authController.Register)
 			auth.POST("/login", authController.Login)
+			auth.GET("/verify-email", authController.VerifyEmail)
+			auth.POST("/forgot-password", authController.ForgotPassword)
+			auth.POST("/reset-password", authController.ResetPassword)
 		}
 
 		// User routes
@@ -137,6 +143,16 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			conversations.GET("/:id/messages", messageController.GetMessages)
 			conversations.POST("/:id/messages", messageController.CreateMessage)
 			conversations.POST("/:id/read", messageController.MarkConversationAsRead)
+		}
+		
+		// Notification routes
+		notifications := v1.Group("/notifications")
+		{
+			notifications.Use(middleware.AuthMiddleware(cfg))
+			notifications.GET("", notificationController.GetNotifications)
+			notifications.GET("/unread-count", notificationController.GetUnreadCount)
+			notifications.PUT("/:id/read", notificationController.MarkAsRead)
+			notifications.PUT("/read-all", notificationController.MarkAllAsRead)
 		}
 	}
 

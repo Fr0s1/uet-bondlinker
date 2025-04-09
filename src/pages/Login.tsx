@@ -19,9 +19,8 @@ const Login = () => {
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Get the redirect path from location state, or default to home page
-  const from = (location.state as LocationState)?.from || '/';
+  const state = location.state as LocationState;
+  const from = state?.from || '/';
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -34,8 +33,6 @@ const Login = () => {
     
     if (!password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
     
     setErrors(newErrors);
@@ -51,10 +48,12 @@ const Login = () => {
     
     try {
       await login(email, password);
-      // Redirect to the page they were trying to access, or home if none
-      navigate(from, { replace: true });
+      navigate(from);
     } catch (error) {
       console.error('Login error:', error);
+      setErrors({
+        form: 'Invalid email or password'
+      });
     }
   };
   
@@ -64,12 +63,18 @@ const Login = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Enter your credentials to sign in to your account
           </CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.form && (
+              <div className="bg-red-50 text-red-500 p-3 rounded text-sm mb-4">
+                {errors.form}
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -84,7 +89,7 @@ const Login = () => {
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-center">
                 <Label htmlFor="password">Password</Label>
                 <Link to="/forgot-password" className="text-sm text-social-blue hover:underline">
                   Forgot password?
@@ -121,7 +126,7 @@ const Login = () => {
           <div className="text-center text-sm">
             Don't have an account?{' '}
             <Link to="/register" className="text-social-blue hover:underline">
-              Create one now
+              Create account
             </Link>
           </div>
         </CardFooter>

@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -8,6 +9,7 @@ import (
 	"socialnet/config"
 	"socialnet/database"
 	"socialnet/router"
+	"socialnet/util"
 )
 
 func main() {
@@ -23,6 +25,11 @@ func main() {
 	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Ensure email templates directory exists
+	if err := util.EnsureEmailTemplatesDir(); err != nil {
+		log.Printf("Warning: Failed to create email templates directory: %v", err)
 	}
 
 	// Setup router

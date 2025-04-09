@@ -1,155 +1,163 @@
 
-import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Home, MessageSquare, Search, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Search, TrendingUp, MessageCircle, UserCircle, LogOut, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from '@/components/ui/command';
-import { useSearch } from '@/hooks/use-search';
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useMobile } from '@/hooks/use-mobile';
+import NotificationCenter from '@/components/NotificationCenter';
 
 const Navbar = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { results, isLoading } = useSearch(searchQuery);
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setOpen(false);
-    }
+  const isMobile = useMobile();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navItems = [
+    { icon: <Home size={24} />, text: 'Home', path: '/' },
+    { icon: <Search size={24} />, text: 'Search', path: '/search' },
+    { icon: <TrendingUp size={24} />, text: 'Trending', path: '/trending' },
+    { icon: <MessageCircle size={24} />, text: 'Messages', path: '/messages' },
+    { 
+      icon: <UserCircle size={24} />, 
+      text: 'Profile', 
+      path: user ? `/profile/${user.username}` : '/' 
+    },
+  ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  const handleOpenSearch = () => {
-    setOpen(true);
-  };
-  
+  const renderNavItems = () => (
+    <>
+      {navItems.map((item) => (
+        <Link
+          key={item.path}
+          to={item.path}
+          className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+            isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
+          }`}
+          onClick={() => setIsMenuOpen(false)}
+        >
+          {item.icon}
+          <span>{item.text}</span>
+        </Link>
+      ))}
+      <button
+        onClick={handleLogout}
+        className="flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 text-gray-700 w-full text-left"
+      >
+        <LogOut size={24} />
+        <span>Logout</span>
+      </button>
+    </>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm py-3">
-      <div className="container flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-9 h-9 rounded-full gradient-blue flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <h1 className="text-xl font-bold text-social-blue">SocialNet</h1>
+            </Link>
+          </div>
+
+          {isMobile ? (
+            <div className="flex items-center space-x-4">
+              <NotificationCenter />
+              
+              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <SheetTrigger asChild>
+                  <button className="p-1">
+                    {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <div className="py-4 flex flex-col space-y-3">
+                    {user && (
+                      <div className="flex items-center space-x-3 mb-4 pb-4 border-b">
+                        <Avatar>
+                          <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                          <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-gray-500">@{user.username}</p>
+                        </div>
+                      </div>
+                    )}
+                    {renderNavItems()}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            <span className="font-bold text-xl hidden md:block">SocialNet</span>
-          </Link>
-        </div>
-
-        <div className="hidden md:flex items-center w-1/3 relative">
-          <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Search..." 
-            className="pl-10 h-9 bg-gray-50 rounded-xl"
-            onClick={handleOpenSearch}
-            ref={inputRef}
-          />
-        </div>
-
-        <CommandDialog open={open} onOpenChange={setOpen}>
-          <form onSubmit={handleSearch}>
-            <CommandInput
-              placeholder="Search for people or posts..."
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              autoFocus
-            />
-          </form>
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            {results.users.length > 0 && (
-              <CommandGroup heading="People">
-                {results.users.slice(0, 4).map((user) => (
-                  <CommandItem
-                    key={user.id}
-                    onSelect={() => {
-                      navigate(`/profile/${user.username}`);
-                      setOpen(false);
-                    }}
+          ) : (
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex space-x-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                      isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
+                    }`}
                   >
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                      <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span>{user.name}</span>
-                    <span className="text-sm text-gray-500 ml-1">@{user.username}</span>
-                  </CommandItem>
+                    {item.icon}
+                  </Link>
                 ))}
-                {results.users.length > 4 && (
-                  <CommandItem
-                    onSelect={() => {
-                      navigate(`/search?q=${encodeURIComponent(searchQuery)}&tab=people`);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="text-social-blue">See all people</span>
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            )}
-            {results.posts.length > 0 && (
-              <CommandGroup heading="Posts">
-                {results.posts.slice(0, 4).map((post) => (
-                  <CommandItem
-                    key={post.id}
-                    onSelect={() => {
-                      navigate(`/post/${post.id}`);
-                      setOpen(false);
-                    }}
-                  >
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarImage src={post.author?.avatar || "/placeholder.svg"} alt={post.author?.name} />
-                      <AvatarFallback>{(post.author?.name || "U").slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="truncate">{post.content.slice(0, 40)}{post.content.length > 40 ? '...' : ''}</span>
-                  </CommandItem>
-                ))}
-                {results.posts.length > 4 && (
-                  <CommandItem
-                    onSelect={() => {
-                      navigate(`/search?q=${encodeURIComponent(searchQuery)}&tab=posts`);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="text-social-blue">See all posts</span>
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </CommandDialog>
+              </div>
 
-        <div className="flex items-center space-x-1 sm:space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-600" asChild>
-            <Link to="/"><Home className="h-5 w-5" /></Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600" asChild>
-            <Link to="/messages"><MessageSquare className="h-5 w-5" /></Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600" asChild>
-            <Link to="/notifications"><Bell className="h-5 w-5" /></Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600 hidden sm:flex" asChild>
-            <Link to={user ? `/profile/${user.username}` : "/login"}><User className="h-5 w-5" /></Link>
-          </Button>
-          <Link to={user ? `/profile/${user.username}` : "/login"} className="ml-2">
-            <Avatar className="h-8 w-8 avatar-shadow">
-              <AvatarImage src={user?.avatar || "/placeholder.svg"} alt="Profile" />
-              <AvatarFallback>{user ? user.name.substring(0, 2).toUpperCase() : "US"}</AvatarFallback>
-            </Avatar>
-          </Link>
+              <NotificationCenter />
+
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="focus:outline-none">
+                      <Avatar>
+                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center space-x-3 p-2 border-b">
+                      <Avatar>
+                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-gray-500">@{user.username}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/profile/${user.username}`}>
+                        <UserCircle className="mr-2 h-4 w-4" /> Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </nav>
