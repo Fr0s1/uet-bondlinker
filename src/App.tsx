@@ -16,6 +16,7 @@ import Profile from '@/pages/Profile';
 import Search from '@/pages/Search';
 import Trending from '@/pages/Trending';
 import Messages from '@/pages/Messages';
+import ChangePassword from '@/pages/ChangePassword';
 import NotFound from '@/pages/NotFound';
 
 import './App.css';
@@ -94,6 +95,14 @@ function App() {
                       <Navbar />
                       <Messages />
                     </>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/change-password"
+                element={
+                  <ProtectedRoute>
+                    <ChangePassword />
                   </ProtectedRoute>
                 }
               />

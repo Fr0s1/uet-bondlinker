@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"socialnet/config"
+	"socialnet/middleware"
 	"socialnet/model"
 	"socialnet/repository"
 	"socialnet/util"
@@ -130,6 +131,63 @@ func (ac *AuthController) Login(c *gin.Context) {
 		Token: token,
 		User:  *user,
 	})
+}
+
+// ChangePassword changes a user's password
+func (ac *AuthController) ChangePassword(c *gin.Context) {
+	var input struct {
+		CurrentPassword string `json:"current_password" binding:"required"`
+		NewPassword     string `json:"new_password" binding:"required,min=6"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get user ID from token
+	userIDStr, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Get user from database
+	user, err := ac.repo.User.FindByID(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Verify current password
+	if !util.CheckPasswordHash(input.CurrentPassword, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Current password is incorrect"})
+		return
+	}
+
+	// Hash the new password
+	hashedPassword, err := util.HashPassword(input.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+	// Update the user's password
+	user.Password = hashedPassword
+	user.UpdatedAt = time.Now()
+	err = ac.repo.User.Update(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
 // VerifyEmail verifies a user's email using the verification token

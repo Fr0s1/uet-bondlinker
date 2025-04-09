@@ -45,11 +45,11 @@ export const useNotifications = (filter: NotificationFilter = { limit: 20, offse
   };
 
   const markAsRead = async (id: string): Promise<void> => {
-    return api.put(`/notifications/${id}/read`);
+    return api.put(`/notifications/${id}/read`, {});
   };
 
   const markAllAsRead = async (): Promise<void> => {
-    return api.put('/notifications/read-all');
+    return api.put('/notifications/read-all', {});
   };
 
   const { data: notifications, isLoading, error, refetch } = useQuery({

@@ -73,6 +73,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/verify-email", authController.VerifyEmail)
 			auth.POST("/forgot-password", authController.ForgotPassword)
 			auth.POST("/reset-password", authController.ResetPassword)
+			
+			// Protected auth routes
+			auth.Use(middleware.AuthMiddleware(cfg))
+			auth.PUT("/change-password", authController.ChangePassword)
 		}
 
 		// User routes

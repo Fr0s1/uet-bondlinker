@@ -32,6 +32,7 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (data: UpdateUserData) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -135,6 +136,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) return;
+    
+    try {
+      await api.put('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      throw error;
+    }
+  };
+  
   return (
     <AuthContext.Provider
       value={{
@@ -145,6 +165,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         register,
         logout,
         updateUser,
+        changePassword,
       }}
     >
       {children}

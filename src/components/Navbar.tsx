@@ -1,6 +1,6 @@
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, TrendingUp, MessageCircle, UserCircle, LogOut, Menu, X } from 'lucide-react';
+import { Home, Search, TrendingUp, MessageCircle, UserCircle, LogOut, Menu, X, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -56,6 +56,16 @@ const Navbar = () => {
           <span>{item.text}</span>
         </Link>
       ))}
+      <Link
+        to="/change-password"
+        className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+          isActive('/change-password') ? 'text-social-blue font-medium' : 'text-gray-700'
+        }`}
+        onClick={() => setIsMenuOpen(false)}
+      >
+        <Lock size={24} />
+        <span>Change Password</span>
+      </Link>
       <button
         onClick={handleLogout}
         className="flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 text-gray-700 w-full text-left"
@@ -147,6 +157,11 @@ const Navbar = () => {
                     <DropdownMenuItem asChild>
                       <Link to={`/profile/${user.username}`}>
                         <UserCircle className="mr-2 h-4 w-4" /> Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/change-password">
+                        <Lock className="mr-2 h-4 w-4" /> Change Password
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
