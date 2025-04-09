@@ -1,3 +1,4 @@
+
 # SocialNet Backend
 
 This is the backend server for the SocialNet social media application, built with Go, Gin, and PostgreSQL.
@@ -23,20 +24,48 @@ backend/
 
 - Go (1.18+)
 - PostgreSQL
+- Docker and Docker Compose (optional)
 
 ### Setup
+
+#### Option 1: Local Development
 
 1. Clone the repository
 2. Copy `.env.example` to `.env` and configure your environment variables
 3. Create a PostgreSQL database
-
-### Running the server
 
 ```bash
 cd backend
 go mod download
 go run main.go
 ```
+
+#### Option 2: Docker Development
+
+1. Clone the repository
+2. Set up environment variables (or use defaults in docker-compose.yml)
+3. Run with Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| HOST | Server host | 0.0.0.0 |
+| PORT | Server port | 8080 |
+| DB_HOST | Database host | localhost |
+| DB_PORT | Database port | 5432 |
+| DB_USER | Database user | postgres |
+| DB_PASSWORD | Database password | postgres |
+| DB_NAME | Database name | socialnet |
+| JWT_SECRET | JWT secret key | default_jwt_secret |
+| AWS_REGION | AWS S3 region | us-east-1 |
+| AWS_BUCKET | AWS S3 bucket name | socialnet-uploads |
+| AWS_ACCESS_KEY_ID | AWS access key ID | |
+| AWS_SECRET_ACCESS_KEY | AWS secret access key | |
 
 ## API Endpoints
 
@@ -74,3 +103,7 @@ go run main.go
 - `POST /api/v1/posts/:id/comments` - Create comment (authenticated)
 - `PUT /api/v1/posts/comments/:commentId` - Update comment (authenticated)
 - `DELETE /api/v1/posts/comments/:commentId` - Delete comment (authenticated)
+
+### Files
+
+- `POST /api/v1/files/upload` - Upload file (authenticated)
