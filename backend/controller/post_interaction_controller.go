@@ -8,6 +8,7 @@ import (
 	"socialnet/middleware"
 	"socialnet/model"
 	"socialnet/repository"
+	"socialnet/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -29,148 +30,130 @@ func NewPostInteractionController(repo *repository.Repository, cfg *config.Confi
 
 // LikePost adds a like to a post
 func (pic *PostInteractionController) LikePost(c *gin.Context) {
-	postIDStr := c.Param("id")
-	postID, err := uuid.Parse(postIDStr)
+	postID, err := middleware.ParseUUIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
-
-	userID, _ := uuid.Parse(userIDStr)
 
 	// Check if post exists
 	_, err = pic.repo.Post.FindByID(postID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not found")
 		return
 	}
 
 	// Check if already liked
 	isLiked, err := pic.repo.Post.IsLiked(userID, postID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		util.RespondWithError(c, http.StatusInternalServerError, util.ErrorMessages.DatabaseError)
 		return
 	}
 
 	if isLiked {
-		c.JSON(http.StatusConflict, gin.H{"error": "Post already liked"})
+		util.RespondWithError(c, http.StatusConflict, "Post already liked")
 		return
 	}
 
 	// Add like to database
 	err = pic.repo.Post.Like(userID, postID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to like post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to like post")
 		return
 	}
 
 	// Get updated like count
 	likeCount, err := pic.repo.Post.CountLikes(postID)
 	if err != nil {
-		c.JSON(http.StatusCreated, gin.H{"message": "Post liked successfully"})
+		util.RespondWithSuccess(c, http.StatusCreated, "Post liked successfully", nil)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Post liked successfully",
-		"likes":   likeCount,
+	util.RespondWithSuccess(c, http.StatusCreated, "Post liked successfully", gin.H{
+		"likes": likeCount,
 	})
 }
 
 // UnlikePost removes a like from a post
 func (pic *PostInteractionController) UnlikePost(c *gin.Context) {
-	postIDStr := c.Param("id")
-	postID, err := uuid.Parse(postIDStr)
+	postID, err := middleware.ParseUUIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
-
-	userID, _ := uuid.Parse(userIDStr)
 
 	// Check if like exists
 	isLiked, err := pic.repo.Post.IsLiked(userID, postID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		util.RespondWithError(c, http.StatusInternalServerError, util.ErrorMessages.DatabaseError)
 		return
 	}
 
 	if !isLiked {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not liked"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not liked")
 		return
 	}
 
 	// Remove like from database
 	err = pic.repo.Post.Unlike(userID, postID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unlike post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to unlike post")
 		return
 	}
 
 	// Get updated like count
 	likeCount, err := pic.repo.Post.CountLikes(postID)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Post unliked successfully"})
+		util.RespondWithSuccess(c, http.StatusOK, "Post unliked successfully", nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Post unliked successfully",
-		"likes":   likeCount,
+	util.RespondWithSuccess(c, http.StatusOK, "Post unliked successfully", gin.H{
+		"likes": likeCount,
 	})
 }
 
 // SharePost shares an existing post
 func (pic *PostInteractionController) SharePost(c *gin.Context) {
-	postIDStr := c.Param("id")
-	postID, err := uuid.Parse(postIDStr)
+	postID, err := middleware.ParseUUIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
-	userIDStr, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+	userID, ok := middleware.RequireAuthentication(c)
+	if !ok {
 		return
 	}
-
-	userID, _ := uuid.Parse(userIDStr)
 
 	// Check if post exists
 	_, err = pic.repo.Post.FindByID(postID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not found")
 		return
 	}
 
 	var input model.PostShare
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if !middleware.BindJSON(c, &input) {
 		return
 	}
 
 	// Share the post
 	sharedPost, err := pic.repo.Post.Share(userID, postID, input.Content)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to share post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to share post")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Post shared successfully",
-		"post":    sharedPost,
-	})
+	util.RespondWithSuccess(c, http.StatusCreated, "Post shared successfully", sharedPost)
 }

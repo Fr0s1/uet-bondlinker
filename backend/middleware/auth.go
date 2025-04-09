@@ -1,3 +1,4 @@
+
 package middleware
 
 import (
@@ -17,7 +18,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		// Get the Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			util.RespondWithError(c, http.StatusUnauthorized, "Authorization header is required")
 			c.Abort()
 			return
 		}
@@ -25,7 +26,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		// Check if the Authorization header has the correct format
 		headerParts := strings.Split(authHeader, " ")
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+			util.RespondWithError(c, http.StatusUnauthorized, "Authorization header format must be Bearer {token}")
 			c.Abort()
 			return
 		}
@@ -33,7 +34,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		// Validate the token
 		userID, err := util.ValidateToken(headerParts[1], cfg.JWT.Secret)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			util.RespondWithError(c, http.StatusUnauthorized, "Invalid or expired token")
 			c.Abort()
 			return
 		}

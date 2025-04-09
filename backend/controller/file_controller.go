@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"socialnet/util"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -46,14 +47,14 @@ func NewFileController(cfg *config.Config) *FileController {
 func (fc *FileController) UploadFile(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
+		util.RespondWithError(c, http.StatusBadRequest, "No file provided")
 		return
 	}
 	defer file.Close()
 
 	// Check file size (limit to 5MB)
 	if header.Size > 5*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File too large (max 5MB)"})
+		util.RespondWithError(c, http.StatusBadRequest, "File too large (max 5MB)")
 		return
 	}
 
@@ -61,14 +62,14 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	validExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
 	if !validExts[ext] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type (only images allowed)"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid file type (only images allowed)")
 		return
 	}
 
 	// Read file content
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to read file")
 		return
 	}
 
@@ -87,7 +88,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to upload file")
 		return
 	}
 
@@ -95,7 +96,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	fileURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", 
 		fc.cfg.AWS.Bucket, fc.cfg.AWS.Region, fileKey)
 
-	c.JSON(http.StatusOK, gin.H{
+	util.RespondWithSuccess(c, http.StatusOK, "File uploaded successfully", gin.H{
 		"url":      fileURL,
 		"filename": fileName,
 	})
