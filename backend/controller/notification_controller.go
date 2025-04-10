@@ -1,4 +1,3 @@
-
 package controller
 
 import (
@@ -10,7 +9,6 @@ import (
 	"socialnet/util"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // NotificationController handles notification-related requests

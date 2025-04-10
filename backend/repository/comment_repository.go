@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -13,8 +12,8 @@ type CommentRepo struct {
 	db *gorm.DB
 }
 
-// NewCommentRepo creates a new CommentRepo
-func NewCommentRepo(db *gorm.DB) *CommentRepo {
+// NewCommentRepository creates a new CommentRepo
+func NewCommentRepository(db *gorm.DB) *CommentRepo {
 	return &CommentRepo{db}
 }
 

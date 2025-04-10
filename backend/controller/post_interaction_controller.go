@@ -1,4 +1,3 @@
-
 package controller
 
 import (
@@ -11,7 +10,6 @@ import (
 	"socialnet/util"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // PostInteractionController handles post interaction-related requests (likes, shares)

@@ -1,4 +1,3 @@
-
 package database
 
 import (
@@ -15,7 +14,7 @@ import (
 func ConnectDB(cfg *config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password,
-		cfg.Database.Name, cfg.Database.SSLMode)
+		cfg.Database.DBName, cfg.Database.SSLMode)
 
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
@@ -32,7 +31,6 @@ func RunMigrations(db *gorm.DB) error {
 		&model.Post{},
 		&model.Like{},
 		&model.Comment{},
-		&model.Share{},
 		&model.Message{},
 		&model.Conversation{},
 		&model.Notification{}, // Add notification model

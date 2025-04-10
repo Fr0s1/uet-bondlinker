@@ -1,11 +1,9 @@
-
 package model
 
 import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // NotificationType represents the type of notification
