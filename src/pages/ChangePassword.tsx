@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import ChangePasswordForm from '@/components/ChangePasswordForm';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ const ChangePasswordPage = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        
+
         <div className="max-w-md mx-auto">
           <h1 className="text-2xl font-bold mb-8 text-center">Account Security</h1>
           <ChangePasswordForm />

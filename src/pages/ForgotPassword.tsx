@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +22,7 @@ const ForgotPassword: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -57,12 +57,12 @@ const ForgotPassword: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
           <CardDescription className="text-center">
-            {!isSubmitted 
-              ? 'Enter your email address and we\'ll send you a link to reset your password.' 
+            {!isSubmitted
+              ? 'Enter your email address and we\'ll send you a link to reset your password.'
               : 'Check your email for the reset link'}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {!isSubmitted ? (
             <Form {...form}>
@@ -74,20 +74,20 @@ const ForgotPassword: React.FC = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="your@email.com" 
-                          {...field} 
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full gradient-blue" 
+
+                <Button
+                  type="submit"
+                  className="w-full gradient-blue"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -114,7 +114,7 @@ const ForgotPassword: React.FC = () => {
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-center">
           <Button asChild variant="outline" className="w-full">
             <Link to="/login" className="flex items-center justify-center">

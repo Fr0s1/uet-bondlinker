@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,14 +17,14 @@ const Register = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { register, isLoading } = useAuth();
   const navigate = useNavigate();
-  
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (!username.trim()) {
       newErrors.username = 'Username is required';
     } else if (username.length < 3) {
@@ -32,34 +32,34 @@ const Register = () => {
     } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       newErrors.username = 'Username can only contain letters, numbers, and underscores';
     }
-    
+
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!password) {
       newErrors.password = 'Password is required';
     } else if (password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       await register({
         name,
@@ -72,7 +72,7 @@ const Register = () => {
       console.error('Registration error:', error);
     }
   };
-  
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 py-12">
       <Card className="w-full max-w-md shadow-lg">
@@ -82,7 +82,7 @@ const Register = () => {
             Enter your information to create your account
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -96,7 +96,7 @@ const Register = () => {
               />
               {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -108,7 +108,7 @@ const Register = () => {
               />
               {errors.username && <p className="text-red-500 text-sm">{errors.username}</p>}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -121,7 +121,7 @@ const Register = () => {
               />
               {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -133,7 +133,7 @@ const Register = () => {
               />
               {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -145,7 +145,7 @@ const Register = () => {
               />
               {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
             </div>
-            
+
             <Button
               type="submit"
               className="w-full gradient-blue"
@@ -162,7 +162,7 @@ const Register = () => {
             </Button>
           </form>
         </CardContent>
-        
+
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm">
             Already have an account?{' '}

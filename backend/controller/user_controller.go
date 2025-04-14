@@ -1,8 +1,10 @@
-
 package controller
 
 import (
+	"errors"
+	"gorm.io/gorm"
 	"net/http"
+	"socialnet/util"
 
 	"socialnet/config"
 	"socialnet/middleware"
@@ -31,7 +33,7 @@ func NewUserController(repo *repository.Repository, cfg *config.Config) *UserCon
 func (uc *UserController) GetUsers(c *gin.Context) {
 	var filter model.UserFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -46,7 +48,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	// Query users from database
 	users, err := uc.repo.User.FindAll(filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch users")
 		return
 	}
 
@@ -58,7 +60,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, users)
+	util.RespondWithSuccess(c, http.StatusOK, "success", users)
 }
 
 // GetUser returns a specific user by ID
@@ -66,7 +68,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
@@ -81,7 +83,11 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	// Query user from database
 	user, err := uc.repo.User.FindByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, "User not found")
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch user")
 		return
 	}
 
@@ -91,7 +97,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 		user.IsFollowed = &isFollowed
 	}
 
-	c.JSON(http.StatusOK, user)
+	util.RespondWithSuccess(c, http.StatusOK, "success", user)
 }
 
 // GetUserByUsername returns a specific user by username
@@ -109,7 +115,11 @@ func (uc *UserController) GetUserByUsername(c *gin.Context) {
 	// Query user from database
 	user, err := uc.repo.User.FindByUsername(username)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, "User not found")
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch user")
 		return
 	}
 
@@ -119,31 +129,35 @@ func (uc *UserController) GetUserByUsername(c *gin.Context) {
 		user.IsFollowed = &isFollowed
 	}
 
-	c.JSON(http.StatusOK, user)
+	util.RespondWithSuccess(c, http.StatusOK, "User found", user)
 }
 
 // GetCurrentUser returns the authenticated user
 func (uc *UserController) GetCurrentUser(c *gin.Context) {
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
 	// Query user from database
 	user, err := uc.repo.User.FindByID(userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, "User not found")
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch user")
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	util.RespondWithSuccess(c, http.StatusOK, "User found", user)
 }
 
 // UpdateUser updates a user's profile
@@ -151,13 +165,13 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -165,20 +179,20 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 
 	// Check if user is updating their own profile
 	if id != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot update another user's profile"})
+		util.RespondWithError(c, http.StatusForbidden, "Cannot update another user's profile")
 		return
 	}
 
 	var input model.UserUpdate
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get existing user
 	user, err := uc.repo.User.FindByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		util.RespondWithError(c, http.StatusNotFound, "User not found")
 		return
 	}
 
@@ -206,11 +220,11 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	// Update user in database
 	err = uc.repo.User.Update(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to update user")
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	util.RespondWithSuccess(c, http.StatusOK, "success", user)
 }
 
 // FollowUser creates a follow relationship between users
@@ -218,13 +232,13 @@ func (uc *UserController) FollowUser(c *gin.Context) {
 	followingIDStr := c.Param("id")
 	followingID, err := uuid.Parse(followingIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
 	followerIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -232,37 +246,37 @@ func (uc *UserController) FollowUser(c *gin.Context) {
 
 	// Check if trying to follow oneself
 	if followerID == followingID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot follow yourself"})
+		util.RespondWithError(c, http.StatusBadRequest, "Cannot follow yourself")
 		return
 	}
 
 	// Check if user to follow exists
 	_, err = uc.repo.User.FindByID(followingID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User to follow not found"})
+		util.RespondWithError(c, http.StatusNotFound, "User to follow not found")
 		return
 	}
 
 	// Check if already following
 	isFollowing, err := uc.repo.User.IsFollowing(followerID, followingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Database error")
 		return
 	}
 
 	if isFollowing {
-		c.JSON(http.StatusConflict, gin.H{"error": "Already following this user"})
+		util.RespondWithError(c, http.StatusConflict, "Already following this user")
 		return
 	}
 
 	// Create follow relationship
 	err = uc.repo.User.Follow(followerID, followingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to follow user"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to follow user")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Successfully followed user"})
+	util.RespondWithSuccess(c, http.StatusCreated, "Successfully followed user", nil)
 }
 
 // UnfollowUser removes a follow relationship between users
@@ -270,13 +284,13 @@ func (uc *UserController) UnfollowUser(c *gin.Context) {
 	followingIDStr := c.Param("id")
 	followingID, err := uuid.Parse(followingIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
 	followerIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -285,23 +299,23 @@ func (uc *UserController) UnfollowUser(c *gin.Context) {
 	// Check if follow relationship exists
 	isFollowing, err := uc.repo.User.IsFollowing(followerID, followingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Database error")
 		return
 	}
 
 	if !isFollowing {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Not following this user"})
+		util.RespondWithError(c, http.StatusNotFound, "Not following this user")
 		return
 	}
 
 	// Remove follow relationship
 	err = uc.repo.User.Unfollow(followerID, followingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unfollow user"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to unfollow user")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully unfollowed user"})
+	util.RespondWithSuccess(c, http.StatusOK, "success", gin.H{"message": "Successfully unfollowed user"})
 }
 
 // GetFollowers returns users who follow the specified user
@@ -309,20 +323,20 @@ func (uc *UserController) GetFollowers(c *gin.Context) {
 	userIDStr := c.Param("id")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
 	var filter model.FollowFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Query followers from database
 	followers, err := uc.repo.User.GetFollowers(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch followers"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch followers")
 		return
 	}
 
@@ -337,7 +351,7 @@ func (uc *UserController) GetFollowers(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, followers)
+	util.RespondWithSuccess(c, http.StatusOK, "success", followers)
 }
 
 // GetFollowing returns users that the specified user follows
@@ -345,20 +359,20 @@ func (uc *UserController) GetFollowing(c *gin.Context) {
 	userIDStr := c.Param("id")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID format")
 		return
 	}
 
 	var filter model.FollowFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Query following from database
 	following, err := uc.repo.User.GetFollowing(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch following"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following")
 		return
 	}
 
@@ -373,14 +387,14 @@ func (uc *UserController) GetFollowing(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, following)
+	util.RespondWithSuccess(c, http.StatusOK, "success", following)
 }
 
 // GetSuggestedUsers returns users that might interest the user
 func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -388,14 +402,14 @@ func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
 
 	var filter model.Pagination
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get suggested users
 	suggestedUsers, err := uc.repo.User.GetSuggestedUsers(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch suggested users"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch suggested users")
 		return
 	}
 
@@ -405,5 +419,5 @@ func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
 		suggestedUsers[i].IsFollowed = &isFollowed
 	}
 
-	c.JSON(http.StatusOK, suggestedUsers)
+	util.RespondWithSuccess(c, http.StatusOK, "success", suggestedUsers)
 }

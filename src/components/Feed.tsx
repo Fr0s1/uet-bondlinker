@@ -1,5 +1,4 @@
 
-import React from 'react';
 import Post from './Post';
 import { usePosts, useFeed } from '@/hooks/use-posts';
 import { Loader2 } from 'lucide-react';
@@ -11,14 +10,26 @@ interface FeedProps {
 }
 
 const Feed = ({ type = 'public', userId }: FeedProps) => {
-  const { posts: publicPosts, isLoading: isPublicLoading, page: publicPage, setPage: setPublicPage } = usePosts(userId);
-  const { posts: personalPosts, isLoading: isPersonalLoading, page: feedPage, setPage: setFeedPage } = useFeed();
-  
-  const posts = type === 'personal' ? personalPosts : publicPosts;
-  const isLoading = type === 'personal' ? isPersonalLoading : isPublicLoading;
-  const page = type === 'personal' ? feedPage : publicPage;
-  const setPage = type === 'personal' ? setFeedPage : setPublicPage;
-  
+
+  let posts: any[];
+  let isLoading: boolean;
+  let page: number;
+  let setPage: any;
+
+  if (type == 'personal') {
+    const { posts: personalPosts, isLoading: isPersonalLoading, page: feedPage, setPage: setFeedPage } = useFeed();
+    posts = personalPosts
+    isLoading = isPersonalLoading
+    page = feedPage
+    setPage = setFeedPage
+  } else {
+    const { posts: publicPosts, isLoading: isPublicLoading, page: publicPage, setPage: setPublicPage } = usePosts(userId);
+    posts = publicPosts
+    isLoading = isPublicLoading
+    page = publicPage
+    setPage = setPublicPage
+  }
+
   if (isLoading && page === 1) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -27,25 +38,25 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
       </div>
     );
   }
-  
+
   if (posts.length === 0 && !isLoading) {
     return (
       <div className="bg-card rounded-xl p-6 text-center shadow-sm my-4">
         <h3 className="text-lg font-medium">No posts yet</h3>
         <p className="text-muted-foreground mt-2">
-          {type === 'personal' 
+          {type === 'personal'
             ? "Follow users to see their posts in your feed!"
             : "Be the first to create a post!"}
         </p>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <Post 
-          key={post.id} 
+        <Post
+          key={post.id}
           id={post.id}
           author={{
             id: post.user_id,
@@ -74,7 +85,7 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
           } : undefined}
         />
       ))}
-      
+
       {posts.length > 0 && (
         <div className="flex justify-center my-4">
           <Button

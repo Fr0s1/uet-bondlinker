@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { MessageSquare } from 'lucide-react';
 import { useCreateDirectMessage } from '@/hooks/use-messages';
 import { toast } from '@/components/ui/use-toast';
@@ -14,14 +14,14 @@ interface ChatButtonProps {
 const ChatButton = ({ username, userId }: ChatButtonProps) => {
   const navigate = useNavigate();
   const createDirectMessage = useCreateDirectMessage();
-  
+
   const handleStartChat = async () => {
     try {
       const conversation = await createDirectMessage.mutateAsync({
         username,
-        content: '', // No initial message
+        content: 'Hello', // No initial message
       });
-      
+
       if (conversation && conversation.id) {
         navigate(`/messages`);
       }
@@ -33,10 +33,10 @@ const ChatButton = ({ username, userId }: ChatButtonProps) => {
       });
     }
   };
-  
+
   return (
-    <Button 
-      variant="outline" 
+    <Button
+      variant="outline"
       className="flex items-center space-x-1"
       onClick={handleStartChat}
       disabled={createDirectMessage.isPending}

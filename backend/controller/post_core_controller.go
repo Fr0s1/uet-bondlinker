@@ -1,8 +1,8 @@
-
 package controller
 
 import (
 	"net/http"
+	"socialnet/util"
 
 	"socialnet/config"
 	"socialnet/middleware"
@@ -31,7 +31,7 @@ func NewPostController(repo *repository.Repository, cfg *config.Config) *PostCon
 func (pc *PostController) GetPosts(c *gin.Context) {
 	var filter model.PostFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -46,7 +46,7 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	// Query posts from database
 	posts, err := pc.repo.Post.FindAll(filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch posts")
 		return
 	}
 
@@ -58,7 +58,7 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, posts)
+	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
 }
 
 // GetPost returns a specific post by ID
@@ -66,7 +66,7 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	// Query post from database
 	post, err := pc.repo.Post.FindByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not found")
 		return
 	}
 
@@ -91,14 +91,14 @@ func (pc *PostController) GetPost(c *gin.Context) {
 		post.IsLiked = &isLiked
 	}
 
-	c.JSON(http.StatusOK, post)
+	util.RespondWithSuccess(c, http.StatusOK, "success", post)
 }
 
 // CreatePost creates a new post
 func (pc *PostController) CreatePost(c *gin.Context) {
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -106,7 +106,7 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 
 	var input model.PostCreate
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -121,17 +121,14 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 	// Save post to database
 	err = pc.repo.Post.Create(&post)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to create post")
 		return
 	}
 
 	// Get the created post with author details
 	createdPost, err := pc.repo.Post.FindByID(post.ID)
 	if err != nil {
-		c.JSON(http.StatusCreated, gin.H{
-			"id":      post.ID.String(),
-			"message": "Post created successfully",
-		})
+		util.RespondWithError(c, http.StatusInternalServerError, "failed to fetch post")
 		return
 	}
 
@@ -147,13 +144,13 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -162,19 +159,19 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	// Check if post exists
 	post, err := pc.repo.Post.FindByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not found")
 		return
 	}
 
 	// Check if user owns the post
 	if post.UserID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot update another user's post"})
+		util.RespondWithError(c, http.StatusForbidden, "Cannot update another user's post")
 		return
 	}
 
 	var input model.PostUpdate
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -185,7 +182,7 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	// Save updated post to database
 	err = pc.repo.Post.Update(post)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to update post")
 		return
 	}
 
@@ -193,7 +190,7 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	isLiked, _ := pc.repo.Post.IsLiked(userID, post.ID)
 	post.IsLiked = &isLiked
 
-	c.JSON(http.StatusOK, post)
+	util.RespondWithSuccess(c, http.StatusOK, "success", post)
 }
 
 // DeletePost deletes a post
@@ -201,13 +198,13 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid post ID format")
 		return
 	}
 
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -216,31 +213,31 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	// Check if post exists
 	post, err := pc.repo.Post.FindByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		util.RespondWithError(c, http.StatusNotFound, "Post not found")
 		return
 	}
 
 	// Check if user owns the post
 	if post.UserID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot delete another user's post"})
+		util.RespondWithError(c, http.StatusForbidden, "Cannot delete another user's post")
 		return
 	}
 
 	// Delete post from database
 	err = pc.repo.Post.Delete(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to delete post")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
+	util.RespondWithSuccess(c, http.StatusOK, "Post deleted successfully", nil)
 }
 
 // GetFeed returns posts from users that the authenticated user follows
 func (pc *PostController) GetFeed(c *gin.Context) {
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -248,14 +245,14 @@ func (pc *PostController) GetFeed(c *gin.Context) {
 
 	var filter model.Pagination
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get feed posts (posts from followed users and own posts)
 	posts, err := pc.repo.Post.FindFeed(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch feed"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch feed")
 		return
 	}
 
@@ -265,14 +262,14 @@ func (pc *PostController) GetFeed(c *gin.Context) {
 		posts[i].IsLiked = &isLiked
 	}
 
-	c.JSON(http.StatusOK, posts)
+	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
 }
 
 // GetTrending returns trending posts based on engagement
 func (pc *PostController) GetTrending(c *gin.Context) {
 	var filter model.Pagination
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -287,7 +284,7 @@ func (pc *PostController) GetTrending(c *gin.Context) {
 	// Get trending posts
 	posts, err := pc.repo.Post.FindTrending(filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch trending posts"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch trending posts")
 		return
 	}
 
@@ -299,14 +296,14 @@ func (pc *PostController) GetTrending(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, posts)
+	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
 }
 
 // GetSuggestedPosts returns posts that might interest the user
 func (pc *PostController) GetSuggestedPosts(c *gin.Context) {
 	userIDStr, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
 
@@ -314,14 +311,14 @@ func (pc *PostController) GetSuggestedPosts(c *gin.Context) {
 
 	var filter model.Pagination
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get suggested posts
 	posts, err := pc.repo.Post.GetSuggestedPosts(userID, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch suggested posts"})
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch suggested posts")
 		return
 	}
 
@@ -331,5 +328,5 @@ func (pc *PostController) GetSuggestedPosts(c *gin.Context) {
 		posts[i].IsLiked = &isLiked
 	}
 
-	c.JSON(http.StatusOK, posts)
+	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
 }

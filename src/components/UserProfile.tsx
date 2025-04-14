@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { MapPin, Calendar, Link as LinkIcon, Upload, UserPlus, UserCheck } from 'lucide-react';
 import {
   Dialog,
@@ -44,10 +44,10 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  
+
   const followMutation = useFollowUser();
   const unfollowMutation = useUnfollowUser();
-  
+
   const handleFollowToggle = () => {
     if (isFollowing) {
       unfollowMutation.mutate(user.id, {
@@ -71,7 +71,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     mutationFn: (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      return api.post<{url: string}>("/uploads", formData, true);
+      return api.post<{ url: string }>("/uploads", formData, true);
     },
     onSuccess: (data) => {
       // After successful S3 upload, update the user profile with the new avatar URL
@@ -88,9 +88,9 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
       setIsUploading(false);
     }
   });
-  
+
   const updateProfileMutation = useMutation({
-    mutationFn: (data: any) => 
+    mutationFn: (data: any) =>
       api.put<any>(`/users/${user.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'username', user.username] });
@@ -111,35 +111,35 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
       setIsUploading(false);
     }
   });
-  
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
+
     setIsUploading(true);
     toast({
       title: "Uploading...",
       description: "Your avatar is being uploaded, please wait.",
     });
-    
+
     // Upload file to S3 via our backend
     fileUploadMutation.mutate(file);
   };
-  
+
   const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
+
     setIsUploading(true);
     toast({
       title: "Uploading...",
       description: "Your cover image is being uploaded, please wait.",
     });
-    
+
     // Upload file to S3 via our backend
     fileUploadMutation.mutate(file);
   };
-  
+
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -148,58 +148,58 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
       return "Unknown date";
     }
   };
-  
+
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow animate-fade-in">
       <div className="relative">
         <div className="h-32 bg-gradient-to-r from-social-blue to-social-darkblue"></div>
         {isCurrentUser && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             className="absolute top-2 right-2 bg-white/80 hover:bg-white"
             onClick={() => coverInputRef.current?.click()}
             disabled={isUploading}
           >
             <Upload className="h-4 w-4" />
-            <input 
-              type="file" 
-              ref={coverInputRef} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={coverInputRef}
+              className="hidden"
               accept="image/*"
-              onChange={handleCoverUpload} 
+              onChange={handleCoverUpload}
             />
           </Button>
         )}
       </div>
-      
+
       <div className="px-4 pb-4">
-        <div className="flex justify-between items-end -mt-12 mb-4">
+        <div className="flex justify-between items-end -mt-14 mb-4">
           <div className="relative">
-            <Avatar className="h-24 w-24 border-4 border-white avatar-shadow">
+            <Avatar className="h-28 w-28 border-4 border-white avatar-shadow">
               <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
               <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             {isCurrentUser && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="icon"
                 className="absolute bottom-0 right-0 rounded-full w-7 h-7 bg-white"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={isUploading}
               >
                 <Upload className="h-3 w-3" />
-                <input 
-                  type="file" 
-                  ref={avatarInputRef} 
-                  className="hidden" 
+                <input
+                  type="file"
+                  ref={avatarInputRef}
+                  className="hidden"
                   accept="image/*"
-                  onChange={handleAvatarUpload} 
+                  onChange={handleAvatarUpload}
                 />
               </Button>
             )}
           </div>
-          
+
           <div className="flex space-x-2 mb-2">
             {isCurrentUser ? (
               <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
@@ -207,8 +207,8 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
               </Button>
             ) : (
               <>
-                <Button 
-                  variant={isFollowing ? "outline" : "default"} 
+                <Button
+                  variant={isFollowing ? "outline" : "default"}
                   className={isFollowing ? "" : "gradient-blue"}
                   onClick={handleFollowToggle}
                   disabled={followMutation.isPending || unfollowMutation.isPending}
@@ -230,13 +230,13 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
             )}
           </div>
         </div>
-        
+
         <div>
           <h2 className="text-xl font-bold text-left">{user.name}</h2>
           <p className="text-gray-500 text-left">@{user.username}</p>
-          
+
           <p className="my-3 text-left">{user.bio}</p>
-          
+
           <div className="flex flex-wrap text-sm text-gray-500 space-x-4 mb-3 text-left">
             {user.location && (
               <div className="flex items-center">
@@ -244,7 +244,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
                 <span>{user.location}</span>
               </div>
             )}
-            
+
             {user.website && (
               <div className="flex items-center">
                 <LinkIcon className="h-4 w-4 mr-1" />
@@ -253,13 +253,13 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
                 </a>
               </div>
             )}
-            
+
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
               <span>Joined {formatDate(user.joinedDate)}</span>
             </div>
           </div>
-          
+
           <div className="flex space-x-5 text-sm text-left">
             <Link to="#" className="hover:underline">
               <span className="font-semibold">{user.following}</span> Following
@@ -270,7 +270,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
           </div>
         </div>
       </div>
-      
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -286,8 +286,8 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
                   <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                   <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="icon"
                   className="absolute bottom-0 right-0 rounded-full w-7 h-7 bg-white"
                   onClick={() => avatarInputRef.current?.click()}

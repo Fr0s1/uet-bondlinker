@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { api } from "@/lib/api-client";
+import { api, ApiResponse } from "@/lib/api-client";
 import { toast } from "@/components/ui/use-toast";
 
 export interface User {
@@ -59,7 +59,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Check if user is logged in on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   }, []);
-  
+
   const fetchCurrentUser = async () => {
     try {
       const userData = await api.get<User>("/users/me");
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   const register = async (data: RegisterData) => {
     setIsLoading(true);
     try {
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -120,10 +120,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       description: "You've been successfully logged out.",
     });
   };
-  
+
   const updateUser = async (data: UpdateUserData) => {
     if (!user) return;
-    
+
     try {
       const updatedUser = await api.put<User>(`/users/${user.id}`, data);
       setUser(updatedUser);
@@ -135,16 +135,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error("Failed to update user:", error);
     }
   };
-  
+
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!user) return;
-    
+
     try {
       await api.put('/auth/change-password', {
         current_password: currentPassword,
         new_password: newPassword
       });
-      
+
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully.",
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       throw error;
     }
   };
-  
+
   return (
     <AuthContext.Provider
       value={{

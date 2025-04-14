@@ -22,7 +22,7 @@ export const useUserByUsername = (username: string) => {
 
 export const useFollowUser = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation<void, Error, string>({
     mutationFn: (userId: string) => api.post<void>(`/users/follow/${userId}`),
     onSuccess: (_, userId) => {
@@ -31,7 +31,7 @@ export const useFollowUser = () => {
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
       queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
-      
+
       toast({
         title: "Success",
         description: "You are now following this user",
@@ -42,7 +42,7 @@ export const useFollowUser = () => {
 
 export const useUnfollowUser = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation<void, Error, string>({
     mutationFn: (userId: string) => api.delete<void>(`/users/follow/${userId}`),
     onSuccess: (_, userId) => {
@@ -51,7 +51,7 @@ export const useUnfollowUser = () => {
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
       queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
-      
+
       toast({
         title: "Success",
         description: "You have unfollowed this user",

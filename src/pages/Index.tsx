@@ -14,14 +14,14 @@ const Index = () => {
   const { user } = useAuth();
   const [refreshFeed, setRefreshFeed] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('following');
-  
+
   const { posts: followingPosts, isLoading: isFollowingLoading } = useFeed();
   const { posts: suggestedPosts, isLoading: isSuggestedLoading } = useSuggestedPosts();
-  
+
   const handlePostCreated = () => {
     setRefreshFeed(!refreshFeed);
   };
-  
+
   const renderFollowingFeed = () => {
     if (isFollowingLoading) {
       return (
@@ -31,7 +31,7 @@ const Index = () => {
         </div>
       );
     }
-    
+
     if (followingPosts.length === 0) {
       return (
         <div className="bg-white rounded-xl p-6 card-shadow text-center">
@@ -40,11 +40,11 @@ const Index = () => {
         </div>
       );
     }
-    
+
     return (
       <div className="space-y-4">
         {followingPosts.map((post) => (
-          <Post 
+          <Post
             key={post.id}
             id={post.id}
             author={{
@@ -77,7 +77,7 @@ const Index = () => {
       </div>
     );
   };
-  
+
   const renderSuggestedFeed = () => {
     if (isSuggestedLoading) {
       return (
@@ -87,7 +87,7 @@ const Index = () => {
         </div>
       );
     }
-    
+
     if (suggestedPosts.length === 0) {
       return (
         <div className="bg-white rounded-xl p-6 card-shadow text-center">
@@ -96,11 +96,11 @@ const Index = () => {
         </div>
       );
     }
-    
+
     return (
       <div className="space-y-4">
         {suggestedPosts.map((post) => (
-          <Post 
+          <Post
             key={post.id}
             id={post.id}
             author={{
@@ -133,13 +133,13 @@ const Index = () => {
       </div>
     );
   };
-  
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       <aside className="hidden lg:block lg:col-span-3">
         {user && (
           <div className="sticky top-20">
-            <UserProfile 
+            <UserProfile
               user={{
                 id: user.id,
                 name: user.name,
@@ -158,10 +158,10 @@ const Index = () => {
           </div>
         )}
       </aside>
-      
-      <main className="lg:col-span-6">
+
+      <main className="lg:col-span-6 pt-4">
         <PostForm onPostCreated={handlePostCreated} />
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="following">Following</TabsTrigger>
@@ -175,7 +175,7 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
+
       <aside className="hidden lg:block lg:col-span-3">
         <div className="sticky top-20 space-y-4">
           <div className="bg-white rounded-xl p-4 card-shadow animate-fade-in">
@@ -201,7 +201,7 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="p-4 text-xs text-gray-500">
             <div className="flex flex-wrap gap-2">
               <a href="#" className="hover:underline">Terms of Service</a>

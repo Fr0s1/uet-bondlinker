@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageSquare, Share2, MoreHorizontal, Trash2 } from 'lucide-react';
@@ -156,14 +156,14 @@ const Post = ({
     onSuccess: () => {
       // Close the dialog first, then invalidate queries
       setDeleteDialogOpen(false);
-      
+
       // Use setTimeout to ensure the dialog is fully closed before invalidating queries
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['posts'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         queryClient.invalidateQueries({ queryKey: ['trending'] });
         queryClient.invalidateQueries({ queryKey: ['search'] });
-        
+
         toast({
           title: "Post deleted",
           description: "Your post has been deleted successfully!",

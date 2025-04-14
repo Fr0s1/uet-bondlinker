@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Notification } from '@/hooks/use-notifications';
@@ -51,9 +51,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
   };
 
   return (
-    <Link 
-      to={getNotificationLink()} 
-      className={`block p-4 border-b hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50' : ''}`} 
+    <Link
+      to={getNotificationLink()}
+      className={`block p-4 border-b hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50' : ''}`}
       onClick={handleClick}
     >
       <div className="flex items-start space-x-3">

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,9 +28,9 @@ const ResetPassword: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const token = new URLSearchParams(location.search).get('token');
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -55,13 +55,13 @@ const ResetPassword: React.FC = () => {
         token,
         new_password: data.new_password,
       });
-      
+
       setIsSuccess(true);
       toast({
         title: 'Password reset successful',
         description: 'Your password has been reset. You can now log in with your new password.',
       });
-      
+
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -87,7 +87,7 @@ const ResetPassword: React.FC = () => {
               Invalid or missing reset token
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="text-center p-6">
             <LockKeyhole className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Invalid Reset Link</h3>
@@ -95,7 +95,7 @@ const ResetPassword: React.FC = () => {
               The password reset link is invalid or has expired. Please request a new password reset link.
             </p>
           </CardContent>
-          
+
           <CardFooter className="flex justify-center gap-4">
             <Button asChild className="w-full">
               <Link to="/forgot-password">Request New Link</Link>
@@ -112,12 +112,12 @@ const ResetPassword: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
           <CardDescription className="text-center">
-            {!isSuccess 
-              ? 'Create a new password for your account' 
+            {!isSuccess
+              ? 'Create a new password for your account'
               : 'Your password has been reset successfully'}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {!isSuccess ? (
             <Form {...form}>
@@ -129,17 +129,17 @@ const ResetPassword: React.FC = () => {
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          {...field} 
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="confirm_password"
@@ -147,20 +147,20 @@ const ResetPassword: React.FC = () => {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          {...field} 
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full gradient-blue" 
+
+                <Button
+                  type="submit"
+                  className="w-full gradient-blue"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -184,7 +184,7 @@ const ResetPassword: React.FC = () => {
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-center">
           <Button asChild variant="outline" className="w-full">
             <Link to="/login" className="flex items-center justify-center">

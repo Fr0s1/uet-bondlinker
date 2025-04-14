@@ -1,15 +1,15 @@
 
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Home, Search, TrendingUp, MessageCircle, UserCircle, LogOut, Menu, X, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -29,12 +29,15 @@ const Navbar = () => {
     { icon: <Search size={24} />, text: 'Search', path: '/search' },
     { icon: <TrendingUp size={24} />, text: 'Trending', path: '/trending' },
     { icon: <MessageCircle size={24} />, text: 'Messages', path: '/messages' },
-    { 
-      icon: <UserCircle size={24} />, 
-      text: 'Profile', 
-      path: user ? `/profile/${user.username}` : '/' 
-    },
   ];
+
+  if (user) {
+    navItems.push({
+      icon: <UserCircle size={24} />,
+      text: 'Profile',
+      path: `/profile/${user.username}`
+    })
+  }
 
   const handleLogout = () => {
     logout();
@@ -47,9 +50,8 @@ const Navbar = () => {
         <Link
           key={item.path}
           to={item.path}
-          className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
-            isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
-          }`}
+          className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
+            }`}
           onClick={() => setIsMenuOpen(false)}
         >
           {item.icon}
@@ -58,9 +60,8 @@ const Navbar = () => {
       ))}
       <Link
         to="/change-password"
-        className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
-          isActive('/change-password') ? 'text-social-blue font-medium' : 'text-gray-700'
-        }`}
+        className={`flex items-center space-x-2 py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${isActive('/change-password') ? 'text-social-blue font-medium' : 'text-gray-700'
+          }`}
         onClick={() => setIsMenuOpen(false)}
       >
         <Lock size={24} />
@@ -89,7 +90,7 @@ const Navbar = () => {
           {isMobile ? (
             <div className="flex items-center space-x-4">
               <NotificationCenter />
-              
+
               <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <SheetTrigger asChild>
                   <button className="p-1">
@@ -122,9 +123,8 @@ const Navbar = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
-                      isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
-                    }`}
+                    className={`flex items-center py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${isActive(item.path) ? 'text-social-blue font-medium' : 'text-gray-700'
+                      }`}
                   >
                     {item.icon}
                   </Link>

@@ -1,12 +1,16 @@
 
 import { toast } from "@/components/ui/use-toast";
 
-const API_URL = "http://localhost:8080/api/v1";
+const API_URL = "http://localhost:8081/api/v1";
+
+export type ApiResponse<T> = {
+  data: T
+}
 
 // Error handling utility
 const handleError = (error: unknown) => {
   console.error("API Error:", error);
-  
+
   if (error instanceof Response) {
     return error.json().then(data => {
       toast({
@@ -17,7 +21,7 @@ const handleError = (error: unknown) => {
       throw data;
     });
   }
-  
+
   toast({
     title: "Error",
     description: "Network error. Please try again later.",
@@ -33,34 +37,34 @@ async function fetchApi<T>(
   isFormData: boolean = false
 ): Promise<T> {
   const token = localStorage.getItem("token");
-  
+
   const headers: HeadersInit = {
     ...options.headers,
   };
-  
+
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
     });
-    
+
     if (!response.ok) {
       return handleError(response) as Promise<T>;
     }
-    
+
     // Handle empty responses (like for DELETE operations)
     if (response.status === 204) {
       return {} as T;
     }
-    
+
     return await response.json();
   } catch (error) {
     return handleError(error) as Promise<T>;
@@ -69,28 +73,37 @@ async function fetchApi<T>(
 
 // API client object with methods for common operations
 export const api = {
-  get: <T>(endpoint: string) => fetchApi<T>(endpoint, { method: "GET" }),
-  
-  post: <T>(endpoint: string, data?: any, isFormData: boolean = false) =>
-    fetchApi<T>(
-      endpoint, 
+  get: async <T>(endpoint: string) => {
+    const { data } = await fetchApi<ApiResponse<T>>(endpoint, { method: "GET" })
+    return data
+  },
+
+  post: async <T>(endpoint: string, body?: any, isFormData: boolean = false) => {
+    const { data } = await fetchApi<ApiResponse<T>>(
+      endpoint,
       {
         method: "POST",
-        body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+        body: isFormData ? body : body ? JSON.stringify(body) : undefined,
       },
       isFormData
-    ),
-  
-  put: <T>(endpoint: string, data: any, isFormData: boolean = false) =>
-    fetchApi<T>(
-      endpoint, 
+    )
+    return data
+  },
+
+  put: async <T>(endpoint: string, body: any, isFormData: boolean = false) => {
+    const { data } = await fetchApi<ApiResponse<T>>(
+      endpoint,
       {
         method: "PUT",
-        body: isFormData ? data : JSON.stringify(data),
+        body: isFormData ? body : JSON.stringify(body),
       },
       isFormData
-    ),
-  
-  delete: <T>(endpoint: string) =>
-    fetchApi<T>(endpoint, { method: "DELETE" }),
+    );
+    return data
+  },
+
+  delete: async <T>(endpoint: string) => {
+    const { data } = await fetchApi<ApiResponse<T>>(endpoint, { method: "DELETE" })
+    return data
+  },
 };

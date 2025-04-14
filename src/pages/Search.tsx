@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search as SearchIcon, Loader2, Users, FileText } from 'lucide-react';
 import Post from '@/components/Post';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Link } from 'react-router-dom';
 import { useSearch, useSearchUsers, useSearchPosts } from '@/hooks/use-search';
 
 const Search = () => {
@@ -16,15 +15,15 @@ const Search = () => {
   const searchParams = new URLSearchParams(location.search);
   const initialQuery = searchParams.get('q') || '';
   const initialTab = searchParams.get('tab') || 'all';
-  
+
   const [query, setQuery] = useState(initialQuery);
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState(initialTab);
-  
+
   const { results, isLoading } = useSearch(searchTerm);
   const { users, isLoading: isUsersLoading } = useSearchUsers(searchTerm);
   const { posts, isLoading: isPostsLoading } = useSearchPosts(searchTerm);
-  
+
   useEffect(() => {
     // Update the URL when search term or tab changes
     if (searchTerm) {
@@ -32,7 +31,7 @@ const Search = () => {
       navigate(newUrl, { replace: true });
     }
   }, [searchTerm, activeTab, navigate]);
-  
+
   // Update active tab when URL tab param changes
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -40,12 +39,12 @@ const Search = () => {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchTerm(query);
   };
-  
+
   const renderResults = () => {
     if (activeTab === 'all') {
       if (isLoading) {
@@ -56,7 +55,7 @@ const Search = () => {
           </div>
         );
       }
-      
+
       if (results.users.length === 0 && results.posts.length === 0) {
         return (
           <div className="text-center py-12">
@@ -64,7 +63,7 @@ const Search = () => {
           </div>
         );
       }
-      
+
       return (
         <>
           {results.users.length > 0 && (
@@ -75,8 +74,8 @@ const Search = () => {
               </div>
               <div className="space-y-4">
                 {results.users.slice(0, 3).map((user) => (
-                  <Link 
-                    key={user.id} 
+                  <Link
+                    key={user.id}
                     to={`/profile/${user.username}`}
                     className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
                   >
@@ -91,8 +90,8 @@ const Search = () => {
                   </Link>
                 ))}
                 {results.users.length > 3 && (
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="w-full text-social-blue"
                     onClick={() => setActiveTab('people')}
                   >
@@ -102,7 +101,7 @@ const Search = () => {
               </div>
             </div>
           )}
-          
+
           {results.posts.length > 0 && (
             <div>
               <div className="flex items-center mb-4">
@@ -111,7 +110,7 @@ const Search = () => {
               </div>
               <div className="space-y-4">
                 {results.posts.slice(0, 3).map((post) => (
-                  <Post 
+                  <Post
                     key={post.id}
                     id={post.id}
                     author={{
@@ -142,8 +141,8 @@ const Search = () => {
                   />
                 ))}
                 {results.posts.length > 3 && (
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="w-full text-social-blue"
                     onClick={() => setActiveTab('posts')}
                   >
@@ -156,7 +155,7 @@ const Search = () => {
         </>
       );
     }
-    
+
     if (activeTab === 'people') {
       if (isUsersLoading) {
         return (
@@ -166,7 +165,7 @@ const Search = () => {
           </div>
         );
       }
-      
+
       if (users.length === 0) {
         return (
           <div className="text-center py-12">
@@ -174,12 +173,12 @@ const Search = () => {
           </div>
         );
       }
-      
+
       return (
         <div className="space-y-4">
           {users.map((user) => (
-            <Link 
-              key={user.id} 
+            <Link
+              key={user.id}
               to={`/profile/${user.username}`}
               className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
             >
@@ -197,7 +196,7 @@ const Search = () => {
         </div>
       );
     }
-    
+
     if (activeTab === 'posts') {
       if (isPostsLoading) {
         return (
@@ -207,7 +206,7 @@ const Search = () => {
           </div>
         );
       }
-      
+
       if (posts.length === 0) {
         return (
           <div className="text-center py-12">
@@ -215,11 +214,11 @@ const Search = () => {
           </div>
         );
       }
-      
+
       return (
         <div className="space-y-4">
           {posts.map((post) => (
-            <Post 
+            <Post
               key={post.id}
               id={post.id}
               author={{
@@ -252,10 +251,10 @@ const Search = () => {
         </div>
       );
     }
-    
+
     return null;
   };
-  
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <form onSubmit={handleSearch} className="mb-6">
@@ -275,7 +274,7 @@ const Search = () => {
           </Button>
         </div>
       </form>
-      
+
       {searchTerm && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="grid w-full grid-cols-3">

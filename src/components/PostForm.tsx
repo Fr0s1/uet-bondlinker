@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import EmojiPicker from 'emoji-picker-react';
 
 interface UploadResponse {
