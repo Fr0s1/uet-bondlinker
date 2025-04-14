@@ -20,7 +20,7 @@ const ChangePasswordForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast({
@@ -30,7 +30,7 @@ const ChangePasswordForm = () => {
       });
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Error",
@@ -39,7 +39,7 @@ const ChangePasswordForm = () => {
       });
       return;
     }
-    
+
     if (newPassword.length < 6) {
       toast({
         title: "Error",
@@ -48,17 +48,17 @@ const ChangePasswordForm = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await changePassword(currentPassword, newPassword);
-      
+
       // Reset form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -80,7 +80,7 @@ const ChangePasswordForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <Label htmlFor="currentPassword">Current Password</Label>
             <div className="relative">
               <Input
@@ -99,8 +99,8 @@ const ChangePasswordForm = () => {
               </button>
             </div>
           </div>
-          
-          <div className="space-y-2">
+
+          <div className="space-y-2 text-left">
             <Label htmlFor="newPassword">New Password</Label>
             <div className="relative">
               <Input
@@ -119,8 +119,8 @@ const ChangePasswordForm = () => {
               </button>
             </div>
           </div>
-          
-          <div className="space-y-2">
+
+          <div className="space-y-2 text-left">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <div className="relative">
               <Input
@@ -139,7 +139,7 @@ const ChangePasswordForm = () => {
               </button>
             </div>
           </div>
-          
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Changing Password..." : "Change Password"}
           </Button>

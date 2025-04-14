@@ -256,7 +256,7 @@ const Post = ({
               <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium group-hover:text-social-blue transition-colors">
+              <h3 className="font-medium group-hover:text-social-blue transition-colors text-left">
                 {author.name}
               </h3>
               <p className="text-sm text-gray-500">
