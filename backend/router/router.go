@@ -1,4 +1,3 @@
-
 package router
 
 import (
@@ -25,7 +24,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 	// Configure CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"},
+		AllowOrigins:     cfg.Server.CorsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -45,7 +44,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	postController := controller.NewPostController(repo, cfg)
 	postInteractionController := controller.NewPostInteractionController(repo, cfg)
 	commentController := controller.NewCommentController(repo, cfg)
-	
+
 	// Initialize search controller
 	searchController := controller.NewSearchController(repo, cfg)
 
@@ -73,7 +72,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/verify-email", authController.VerifyEmail)
 			auth.POST("/forgot-password", authController.ForgotPassword)
 			auth.POST("/reset-password", authController.ResetPassword)
-			
+
 			// Protected auth routes
 			auth.Use(middleware.AuthMiddleware(cfg))
 			auth.PUT("/change-password", authController.ChangePassword)
@@ -148,7 +147,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			conversations.POST("/:id/messages", messageController.CreateMessage)
 			conversations.POST("/:id/read", messageController.MarkConversationAsRead)
 		}
-		
+
 		// Notification routes
 		notifications := v1.Group("/notifications")
 		{
