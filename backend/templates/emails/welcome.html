@@ -1,23 +1,25 @@
-
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Welcome to SocialNet</title>
-		</head>
-		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-			<div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-				<h1 style="color: #3b82f6;">Welcome to SocialNet!</h1>
-			</div>
-			<p>Hi {{.Name}},</p>
-			<p>Thank you for joining SocialNet. To complete your registration, please verify your email address by clicking the button below:</p>
-			<div style="text-align: center; margin: 30px 0;">
-				<a href="{{.VerifyLink}}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify My Email</a>
-			</div>
-			<p>If the button doesn't work, you can also copy and paste this link into your browser:</p>
-			<p><a href="{{.VerifyLink}}">{{.VerifyLink}}</a></p>
-			<p>If you didn't sign up for SocialNet, you can safely ignore this email.</p>
-			<hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-			<p style="color: #666; font-size: 14px;">The SocialNet Team</p>
-		</body>
-		</html>
-		
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome to SocialNet</title>
+</head>
+<body
+  style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+  <h1 style="color: #3b82f6;">Welcome to SocialNet!</h1>
+</div>
+<p>Hi {{.Name}},</p>
+<p>Thank you for joining SocialNet. To complete your registration, please verify your email address by clicking the
+  button below:</p>
+<div style="text-align: center; margin: 30px 0;">
+  <a href="{{.VerifyLink}}"
+     style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify
+    My Email</a>
+</div>
+<p>If the button doesn't work, you can also copy and paste this link into your browser:</p>
+<p><a href="{{.VerifyLink}}">{{.VerifyLink}}</a></p>
+<p>If you didn't sign up for SocialNet, you can safely ignore this email.</p>
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+<p style="color: #666; font-size: 14px;">The SocialNet Team</p>
+</body>
+</html>

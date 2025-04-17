@@ -1,4 +1,3 @@
-
 package repository
 
 import (
@@ -102,8 +101,8 @@ func (r *MessageRepository) FindConversations(userID uuid.UUID) ([]model.Convers
 		}
 
 		results = append(results, model.ConversationResponse{
-			ID: conv.ID,
-			Recipient: otherUser,
+			ID:          conv.ID,
+			Recipient:   otherUser,
 			LastMessage: lastMessageBrief,
 		})
 	}
@@ -142,7 +141,7 @@ func (r *MessageRepository) CreateMessage(message *model.Message) error {
 // FindMessages gets all messages in a conversation
 func (r *MessageRepository) FindMessages(conversationID uuid.UUID, filter model.MessageFilter) ([]model.Message, error) {
 	var messages []model.Message
-	
+
 	// Get the users in the conversation
 	user1, user2, err := r.GetConversationUsers(conversationID)
 	if err != nil {

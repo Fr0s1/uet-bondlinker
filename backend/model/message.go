@@ -1,4 +1,3 @@
-
 package model
 
 import (
@@ -30,8 +29,8 @@ type Conversation struct {
 
 // ConversationResponse is the API response for a conversation
 type ConversationResponse struct {
-	ID         uuid.UUID     `json:"id"`
-	Recipient  User          `json:"recipient"`
+	ID          uuid.UUID     `json:"id"`
+	Recipient   User          `json:"recipient"`
 	LastMessage *MessageBrief `json:"lastMessage"`
 }
 

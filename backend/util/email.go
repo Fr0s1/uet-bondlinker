@@ -1,4 +1,3 @@
-
 package util
 
 import (
@@ -189,7 +188,7 @@ func EnsureEmailTemplatesDir() error {
 
 	// Create sample templates if they don't exist
 	templates := map[string]string{
-		"welcome.html":       getFallbackTemplate("welcome"),
+		"welcome.html":        getFallbackTemplate("welcome"),
 		"reset-password.html": getFallbackTemplate("reset-password"),
 	}
 

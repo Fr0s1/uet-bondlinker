@@ -1,4 +1,3 @@
-
 package model
 
 // Pagination represents common pagination parameters

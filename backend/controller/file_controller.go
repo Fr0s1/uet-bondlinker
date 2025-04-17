@@ -1,4 +1,3 @@
-
 package controller
 
 import (
@@ -7,9 +6,9 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"socialnet/util"
 	"strings"
 	"time"
-	"socialnet/util"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,7 +29,7 @@ func NewFileController(cfg *config.Config) *FileController {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(cfg.AWS.Region),
 	})
-	
+
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create AWS session: %v", err))
 	}
@@ -93,7 +92,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	}
 
 	// Generate file URL
-	fileURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", 
+	fileURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s",
 		fc.cfg.AWS.Bucket, fc.cfg.AWS.Region, fileKey)
 
 	util.RespondWithSuccess(c, http.StatusOK, "File uploaded successfully", gin.H{
