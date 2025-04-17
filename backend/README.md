@@ -1,4 +1,3 @@
-
 # SocialNet Backend
 
 This is the backend server for the SocialNet social media application, built with Go, Gin, and PostgreSQL.
@@ -52,20 +51,20 @@ docker-compose up -d
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| HOST | Server host | 0.0.0.0 |
-| PORT | Server port | 8080 |
-| DB_HOST | Database host | localhost |
-| DB_PORT | Database port | 5432 |
-| DB_USER | Database user | postgres |
-| DB_PASSWORD | Database password | postgres |
-| DB_NAME | Database name | socialnet |
-| JWT_SECRET | JWT secret key | default_jwt_secret |
-| AWS_REGION | AWS S3 region | us-east-1 |
-| AWS_BUCKET | AWS S3 bucket name | socialnet-uploads |
-| AWS_ACCESS_KEY_ID | AWS access key ID | |
-| AWS_SECRET_ACCESS_KEY | AWS secret access key | |
+| Variable              | Description           | Default            |
+|-----------------------|-----------------------|--------------------|
+| HOST                  | Server host           | 0.0.0.0            |
+| PORT                  | Server port           | 8080               |
+| DB_HOST               | Database host         | localhost          |
+| DB_PORT               | Database port         | 5432               |
+| DB_USER               | Database user         | postgres           |
+| DB_PASSWORD           | Database password     | postgres           |
+| DB_NAME               | Database name         | socialnet          |
+| JWT_SECRET            | JWT secret key        | default_jwt_secret |
+| AWS_REGION            | AWS S3 region         | us-east-1          |
+| AWS_BUCKET            | AWS S3 bucket name    | socialnet-uploads  |
+| AWS_ACCESS_KEY_ID     | AWS access key ID     |                    |
+| AWS_SECRET_ACCESS_KEY | AWS secret access key |                    |
 
 ## API Endpoints
 

@@ -1,4 +1,3 @@
-
 package controller
 
 import (
@@ -7,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	
+
 	"socialnet/config"
 	"socialnet/middleware"
 	"socialnet/model"

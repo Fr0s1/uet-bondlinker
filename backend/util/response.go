@@ -1,4 +1,3 @@
-
 package util
 
 import (
@@ -61,33 +60,33 @@ func RespondWithNoContent(c *gin.Context) {
 
 // ErrorMessages provides standardized error messages
 var ErrorMessages = struct {
-	NotAuthenticated     string
-	NotAuthorized        string
-	InvalidRequest       string
-	ResourceNotFound     string
-	InternalServerError  string
-	Conflict             string
-	ValidationFailed     string
-	DatabaseError        string
-	AlreadyExists        string
-	InvalidToken         string
-	ExpiredToken         string
-	InvalidCredentials   string
-	InvalidUserID        string
-	InvalidResourceID    string
+	NotAuthenticated    string
+	NotAuthorized       string
+	InvalidRequest      string
+	ResourceNotFound    string
+	InternalServerError string
+	Conflict            string
+	ValidationFailed    string
+	DatabaseError       string
+	AlreadyExists       string
+	InvalidToken        string
+	ExpiredToken        string
+	InvalidCredentials  string
+	InvalidUserID       string
+	InvalidResourceID   string
 }{
-	NotAuthenticated:     "Not authenticated",
-	NotAuthorized:        "Not authorized to perform this action",
-	InvalidRequest:       "Invalid request parameters",
-	ResourceNotFound:     "Resource not found",
-	InternalServerError:  "Internal server error",
-	Conflict:             "Resource conflict",
-	ValidationFailed:     "Validation failed",
-	DatabaseError:        "Database error",
-	AlreadyExists:        "Resource already exists",
-	InvalidToken:         "Invalid or expired token",
-	ExpiredToken:         "Token has expired",
-	InvalidCredentials:   "Invalid credentials",
-	InvalidUserID:        "Invalid user ID",
-	InvalidResourceID:    "Invalid resource ID",
+	NotAuthenticated:    "Not authenticated",
+	NotAuthorized:       "Not authorized to perform this action",
+	InvalidRequest:      "Invalid request parameters",
+	ResourceNotFound:    "Resource not found",
+	InternalServerError: "Internal server error",
+	Conflict:            "Resource conflict",
+	ValidationFailed:    "Validation failed",
+	DatabaseError:       "Database error",
+	AlreadyExists:       "Resource already exists",
+	InvalidToken:        "Invalid or expired token",
+	ExpiredToken:        "Token has expired",
+	InvalidCredentials:  "Invalid credentials",
+	InvalidUserID:       "Invalid user ID",
+	InvalidResourceID:   "Invalid resource ID",
 }

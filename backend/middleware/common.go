@@ -1,4 +1,3 @@
-
 package middleware
 
 import (
@@ -27,13 +26,13 @@ func RequireAuthentication(c *gin.Context) (uuid.UUID, bool) {
 		util.RespondWithError(c, http.StatusUnauthorized, util.ErrorMessages.NotAuthenticated)
 		return uuid.Nil, false
 	}
-	
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		util.RespondWithError(c, http.StatusBadRequest, util.ErrorMessages.InvalidUserID)
 		return uuid.Nil, false
 	}
-	
+
 	return userID, true
 }
 
@@ -70,11 +69,11 @@ func GetOptionalUserID(c *gin.Context) *uuid.UUID {
 	if err != nil {
 		return nil
 	}
-	
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		return nil
 	}
-	
+
 	return &userID
 }

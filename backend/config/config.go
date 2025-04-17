@@ -1,8 +1,8 @@
-
 package config
 
 import (
 	"os"
+	"strings"
 	"time"
 )
 
@@ -17,9 +17,10 @@ type Config struct {
 
 // ServerConfig holds server-specific configuration
 type ServerConfig struct {
-	Host string
-	Port string
-	Env  string
+	Host        string
+	Port        string
+	Env         string
+	CorsOrigins []string
 }
 
 // DatabaseConfig holds database-specific configuration
@@ -63,12 +64,12 @@ func New() *Config {
 	if err != nil {
 		jwtExpiry = 24 * time.Hour
 	}
-	
+
 	verifyExpiry, err := time.ParseDuration(getEnv("EMAIL_VERIFY_EXPIRY", "48h"))
 	if err != nil {
 		verifyExpiry = 48 * time.Hour
 	}
-	
+
 	resetExpiry, err := time.ParseDuration(getEnv("PASSWORD_RESET_EXPIRY", "15m"))
 	if err != nil {
 		resetExpiry = 15 * time.Minute
@@ -76,9 +77,10 @@ func New() *Config {
 
 	return &Config{
 		Server: ServerConfig{
-			Host: getEnv("HOST", "0.0.0.0"),
-			Port: getEnv("PORT", "8080"),
-			Env:  getEnv("ENV", "development"),
+			Host:        getEnv("HOST", "0.0.0.0"),
+			Port:        getEnv("PORT", "8080"),
+			Env:         getEnv("ENV", "development"),
+			CorsOrigins: strings.Split(getEnv("ALLOWED_CORS_ORIGINS", "http://localhost:5173"), ","),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
