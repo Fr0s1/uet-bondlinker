@@ -88,7 +88,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	// Generate unique filename
 	uniqueID := uuid.New().String()
 	fileName := fmt.Sprintf("%s-%s%s", time.Now().Format("20060102"), uniqueID, ext)
-	fileKey := fmt.Sprintf("/public/uploads/%s", fileName)
+	fileKey := fmt.Sprintf("public/uploads/%s", fileName)
 
 	// Upload to S3
 	contentType := http.DetectContentType(fileContent)
