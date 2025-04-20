@@ -20,7 +20,7 @@ const Login = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { login, isLoading, isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 

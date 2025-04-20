@@ -18,7 +18,7 @@ const Register = () => {
   const { register, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
