@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"socialnet/config"
 	"socialnet/controller"
@@ -29,7 +30,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		MaxAge:           86400,
+		MaxAge:           86400 * time.Second,
 	}))
 
 	// Initialize repositories
