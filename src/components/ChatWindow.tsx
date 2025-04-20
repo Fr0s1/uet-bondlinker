@@ -35,7 +35,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Fetch conversation with proper typing
   const { data: conversation, isLoading: isConversationLoading } = useQuery<Conversation>({
     queryKey: ['conversation', conversationId],
@@ -44,7 +44,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
     },
     enabled: !!conversationId
   });
-  
+
   // Fetch messages with proper typing
   const { data: messages, isLoading: isMessagesLoading } = useQuery<Message[]>({
     queryKey: ['messages', conversationId],
@@ -53,7 +53,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
     },
     enabled: !!conversationId && !!user
   });
-  
+
   // Send message mutation
   const sendMessageMutation = useMutation<Message, Error, string>({
     mutationFn: async (content: string) => {
@@ -64,32 +64,32 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
       queryClient.setQueryData(['messages', conversationId], (oldData: Message[] | undefined) => {
         return oldData ? [...oldData, newMessage] : [newMessage];
       });
-      
+
       // Update conversations list to show latest message
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      
+
       // Scroll to bottom
       scrollToBottom();
     }
   });
-  
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim()) return;
-    
+
     sendMessageMutation.mutate(newMessage);
     setNewMessage('');
   };
-  
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   if (isConversationLoading || isMessagesLoading) {
     return (
       <div className="bg-white rounded-xl p-4 h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
@@ -98,7 +98,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
       </div>
     );
   }
-  
+
   if (!conversation) {
     return (
       <div className="bg-white rounded-xl p-4 h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
@@ -109,15 +109,15 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
       </div>
     );
   }
-  
+
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow h-[calc(100vh-120px)] flex flex-col">
       {/* Chat header */}
       <div className="p-4 border-b flex items-center">
         <Avatar className="h-10 w-10 mr-3">
-          <AvatarImage 
-            src={conversation.recipient.avatar || "/placeholder.svg"} 
-            alt={conversation.recipient.name} 
+          <AvatarImage
+            src={conversation.recipient.avatar || "/user-avatar.png"}
+            alt={conversation.recipient.name}
           />
           <AvatarFallback>
             {conversation.recipient.name.substring(0, 2).toUpperCase()}
@@ -128,13 +128,13 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
           <p className="text-xs text-gray-500">@{conversation.recipient.username}</p>
         </div>
       </div>
-      
+
       {/* Messages area */}
       <div className="flex-grow overflow-y-auto p-4 bg-gray-50">
         {messages && messages.length > 0 ? (
           <div className="space-y-3">
             {messages.map((message) => (
-              <MessageBubble 
+              <MessageBubble
                 key={message.id}
                 message={message}
                 isCurrentUser={message.senderId === user?.id}
@@ -148,7 +148,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
           </div>
         )}
       </div>
-      
+
       {/* Message input */}
       <form onSubmit={handleSendMessage} className="p-3 border-t flex gap-2">
         <Input
@@ -158,8 +158,8 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
           onChange={(e) => setNewMessage(e.target.value)}
           className="flex-grow"
         />
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={sendMessageMutation.isPending || !newMessage.trim()}
         >
           {sendMessageMutation.isPending ? (

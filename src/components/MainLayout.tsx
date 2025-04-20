@@ -7,7 +7,9 @@ export function MainLayout() {
     <div>
       <Navbar />
       <ProtectedRoute>
-        <Outlet />
+        <div className="px-4 max-w-screen-2xl m-auto">
+          <Outlet />
+        </div>
       </ProtectedRoute>
     </div>
   )

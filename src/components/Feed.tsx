@@ -62,7 +62,7 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
             id: post.user_id,
             name: post.author?.name || "Unknown User",
             username: post.author?.username || "unknown",
-            avatar: post.author?.avatar || "/placeholder.svg",
+            avatar: post.author?.avatar || "/user-avatar.png",
           }}
           content={post.content}
           image={post.image}
@@ -77,7 +77,7 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
               id: post.shared_post.user_id,
               name: post.shared_post.author?.name || "Unknown User",
               username: post.shared_post.author?.username || "unknown",
-              avatar: post.shared_post.author?.avatar || "/placeholder.svg",
+              avatar: post.shared_post.author?.avatar || "/user-avatar.png",
             },
             content: post.shared_post.content,
             image: post.shared_post.image,

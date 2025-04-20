@@ -24,6 +24,8 @@ func main() {
 	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
+	} else {
+		log.Println("Database migrations completed successfully")
 	}
 
 	// Ensure email templates directory exists
