@@ -44,7 +44,7 @@ const CommentSection = ({ postId }: { postId: string }) => {
     <div className="bg-gray-50 border-t p-4">
       <form onSubmit={handleSubmitComment} className="flex items-start space-x-3 mb-4">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name || "User"} />
+          <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
           <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
 
@@ -78,7 +78,7 @@ const CommentSection = ({ postId }: { postId: string }) => {
             <div key={comment.id} className="flex space-x-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src={comment.author?.avatar || "/placeholder.svg"}
+                  src={comment.author?.avatar}
                   alt={comment.author?.name || "User"}
                 />
                 <AvatarFallback>
@@ -90,13 +90,13 @@ const CommentSection = ({ postId }: { postId: string }) => {
                 <div className="bg-white p-3 rounded-lg">
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium text-sm">{comment.author?.name || "Unknown User"}</h4>
-                    <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+                    <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
                   </div>
                   <p className="text-sm mt-1 text-left">{comment.content}</p>
                 </div>
 
                 <div className="flex items-center space-x-4 mt-1 ml-1">
-                  {user?.id === comment.user_id && (
+                  {user?.id === comment.userId && (
                     <button
                       className="text-xs text-gray-500 hover:text-red-500"
                       onClick={() => deleteComment.mutate(comment.id)}

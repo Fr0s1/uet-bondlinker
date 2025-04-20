@@ -14,31 +14,30 @@ const Search = () => {
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const initialQuery = searchParams.get('q') || '';
-  const initialTab = searchParams.get('tab') || 'all';
+  const initialTab = (searchParams.get('tab') || 'all');
 
   const [query, setQuery] = useState(initialQuery);
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  const { results, isLoading } = useSearch(searchTerm);
-  const { users, isLoading: isUsersLoading } = useSearchUsers(searchTerm);
-  const { posts, isLoading: isPostsLoading } = useSearchPosts(searchTerm);
+  const { results, isLoading } = useSearch({
+    query: searchTerm,
+    enabled: activeTab == 'all'
+  });
+  const { users, isLoading: isUsersLoading } = useSearchUsers({
+    query: searchTerm,
+    enabled: activeTab == 'people'
+  });
+  const { posts, isLoading: isPostsLoading } = useSearchPosts({
+    query: searchTerm,
+    enabled: activeTab == 'posts'
+  });
 
   useEffect(() => {
     // Update the URL when search term or tab changes
-    if (searchTerm) {
-      const newUrl = `/search?q=${encodeURIComponent(searchTerm)}${activeTab !== 'all' ? `&tab=${activeTab}` : ''}`;
-      navigate(newUrl, { replace: true });
-    }
-  }, [searchTerm, activeTab, navigate]);
-
-  // Update active tab when URL tab param changes
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam && ['all', 'people', 'posts'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
+    const newUrl = `/search?q=${encodeURIComponent(searchTerm)}${activeTab !== 'all' ? `&tab=${activeTab}` : ''}`;
+    navigate(newUrl, { replace: true });
+  }, [searchTerm, activeTab]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +79,7 @@ const Search = () => {
                     className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
                   >
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                      <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="ml-4">
@@ -112,32 +111,7 @@ const Search = () => {
                 {results.posts.slice(0, 3).map((post) => (
                   <Post
                     key={post.id}
-                    id={post.id}
-                    author={{
-                      id: post.user_id,
-                      name: post.author?.name || "Unknown User",
-                      username: post.author?.username || "unknown",
-                      avatar: post.author?.avatar || "/placeholder.svg",
-                    }}
-                    content={post.content}
-                    image={post.image}
-                    createdAt={post.created_at}
-                    likes={post.likes}
-                    comments={post.comments}
-                    shares={post.shares || 0}
-                    isLiked={post.is_liked}
-                    sharedPost={post.shared_post ? {
-                      id: post.shared_post.id,
-                      author: {
-                        id: post.shared_post.user_id,
-                        name: post.shared_post.author?.name || "Unknown User",
-                        username: post.shared_post.author?.username || "unknown",
-                        avatar: post.shared_post.author?.avatar || "/placeholder.svg",
-                      },
-                      content: post.shared_post.content,
-                      image: post.shared_post.image,
-                      createdAt: post.shared_post.created_at,
-                    } : undefined}
+                    post={post}
                   />
                 ))}
                 {results.posts.length > 3 && (
@@ -183,7 +157,7 @@ const Search = () => {
               className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
             >
               <Avatar className="h-12 w-12">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="ml-4">
@@ -220,32 +194,7 @@ const Search = () => {
           {posts.map((post) => (
             <Post
               key={post.id}
-              id={post.id}
-              author={{
-                id: post.user_id,
-                name: post.author?.name || "Unknown User",
-                username: post.author?.username || "unknown",
-                avatar: post.author?.avatar || "/placeholder.svg",
-              }}
-              content={post.content}
-              image={post.image}
-              createdAt={post.created_at}
-              likes={post.likes}
-              comments={post.comments}
-              shares={post.shares || 0}
-              isLiked={post.is_liked}
-              sharedPost={post.shared_post ? {
-                id: post.shared_post.id,
-                author: {
-                  id: post.shared_post.user_id,
-                  name: post.shared_post.author?.name || "Unknown User",
-                  username: post.shared_post.author?.username || "unknown",
-                  avatar: post.shared_post.author?.avatar || "/placeholder.svg",
-                },
-                content: post.shared_post.content,
-                image: post.shared_post.image,
-                createdAt: post.shared_post.created_at,
-              } : undefined}
+              post={post}
             />
           ))}
         </div>
@@ -276,7 +225,7 @@ const Search = () => {
       </form>
 
       {searchTerm && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <Tabs value={activeTab.toString()} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="people">People</TabsTrigger>

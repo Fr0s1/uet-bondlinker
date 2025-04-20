@@ -18,26 +18,17 @@ import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
 import { useFollowUser, useUnfollowUser } from '@/hooks/use-users';
 import ChatButton from './ChatButton';
+import { User } from '@/contexts/AuthContext';
+import { useFileUpload } from '@/hooks/use-upload';
 
 interface UserProfileProps {
-  user: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-    bio: string;
-    followers: number;
-    following: number;
-    location?: string;
-    website?: string;
-    joinedDate: string;
-    isFollowing?: boolean;
-  };
+  user: User;
   isCurrentUser?: boolean;
+  size: 'small' | 'large'
 }
 
-const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
-  const [isFollowing, setIsFollowing] = React.useState(user.isFollowing || false);
+const UserProfile = ({ user, isCurrentUser = false, size }: UserProfileProps) => {
+  const [isFollowing, setIsFollowing] = React.useState(user.isFollowed || false);
   const [followerCount, setFollowerCount] = React.useState(user.followers);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -66,31 +57,10 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     }
   };
 
-  // File upload mutation for S3
-  const fileUploadMutation = useMutation({
-    mutationFn: (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      return api.post<{ url: string }>("/uploads", formData, true);
-    },
-    onSuccess: (data) => {
-      // After successful S3 upload, update the user profile with the new avatar URL
-      updateProfileMutation.mutate({
-        avatar: data.url
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    }
-  });
+  const fileUploadMutation = useFileUpload()
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: (data: { avatar?: string, cover?: string }) =>
       api.put<any>(`/users/${user.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'username', user.username] });
@@ -123,7 +93,14 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     });
 
     // Upload file to S3 via our backend
-    fileUploadMutation.mutate(file);
+    fileUploadMutation.mutate(file, {
+      onSuccess: ({ url }) => {
+        // After successful S3 upload, update the user profile with the new avatar URL
+        updateProfileMutation.mutate({
+          avatar: url
+        });
+      }
+    });
   };
 
   const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +114,14 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     });
 
     // Upload file to S3 via our backend
-    fileUploadMutation.mutate(file);
+    fileUploadMutation.mutate(file, {
+      onSuccess: ({ url }) => {
+        // After successful S3 upload, update the user profile with the new avatar URL
+        updateProfileMutation.mutate({
+          cover: url
+        });
+      }
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -152,7 +136,12 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow animate-fade-in">
       <div className="relative">
-        <div className="h-32 bg-gradient-to-r from-social-blue to-social-darkblue"></div>
+        <div className={`${size == 'small' ? 'h-32' : 'h-64'} bg-gradient-to-r from-social-blue to-social-darkblue`} style={{
+          backgroundImage: user.cover ? `url(${user.cover})` : null,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          backgroundSize: 'cover'
+        }}></div>
         {isCurrentUser && (
           <Button
             variant="outline"
@@ -176,8 +165,8 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
       <div className="px-4 pb-4">
         <div className="flex justify-between items-end -mt-14 mb-4">
           <div className="relative">
-            <Avatar className="h-28 w-28 border-4 border-white avatar-shadow">
-              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+            <Avatar className="h-28 w-28 border-4 border-white avatar-shadow bg-white">
+              <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             {isCurrentUser && (
@@ -256,7 +245,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
 
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
-              <span>Joined {formatDate(user.joinedDate)}</span>
+              <span>Joined {formatDate(user.createdAt)}</span>
             </div>
           </div>
 
@@ -283,7 +272,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
             <div className="flex justify-center">
               <div className="relative">
                 <Avatar className="h-20 w-20 border-2 border-white avatar-shadow">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                  <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <Button

@@ -38,51 +38,18 @@ import { toast } from '@/components/ui/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import EmojiPicker from 'emoji-picker-react';
+import { type Post as PostType } from '@/hooks/use-posts';
 
 export interface PostProps {
-  id: string;
-  author: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  content: string;
-  image?: string;
-  createdAt: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  isLiked?: boolean;
-  sharedPost?: {
-    id: string;
-    author: {
-      id: string;
-      name: string;
-      username: string;
-      avatar: string;
-    };
-    content: string;
-    image?: string;
-    createdAt: string;
-  };
+  post: PostType
 }
 
 const Post = ({
-  id,
-  author,
-  content,
-  image,
-  createdAt,
-  likes,
-  comments,
-  shares,
-  isLiked = false,
-  sharedPost
+  post
 }: PostProps) => {
-  const [liked, setLiked] = useState(isLiked);
-  const [likeCount, setLikeCount] = useState(likes);
-  const [shareCount, setShareCount] = useState(shares);
+  const [liked, setLiked] = useState(post.isLiked);
+  const [likeCount, setLikeCount] = useState(post.likes);
+  const [shareCount, setShareCount] = useState(post.shares);
   const [showComments, setShowComments] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareContent, setShareContent] = useState('');
@@ -93,7 +60,7 @@ const Post = ({
   const deleteDialogRef = useRef<HTMLDivElement>(null);
 
   const likePostMutation = useMutation({
-    mutationFn: () => api.post(`/posts/${id}/like`),
+    mutationFn: () => api.post(`/posts/${post.id}/like`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -111,7 +78,7 @@ const Post = ({
   });
 
   const unlikePostMutation = useMutation({
-    mutationFn: () => api.delete(`/posts/${id}/like`),
+    mutationFn: () => api.delete(`/posts/${post.id}/like`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -129,7 +96,7 @@ const Post = ({
   });
 
   const sharePostMutation = useMutation({
-    mutationFn: (content: string) => api.post(`/posts/${id}/share`, { content }),
+    mutationFn: (content: string) => api.post(`/posts/${post.id}/share`, { content }),
     onSuccess: () => {
       setShareDialogOpen(false);
       setShareContent('');
@@ -152,7 +119,7 @@ const Post = ({
   });
 
   const deletePostMutation = useMutation({
-    mutationFn: () => api.delete(`/posts/${id}`),
+    mutationFn: () => api.delete(`/posts/${post.id}`),
     onSuccess: () => {
       // Close the dialog first, then invalidate queries
       setDeleteDialogOpen(false);
@@ -244,23 +211,23 @@ const Post = ({
     });
   };
 
-  const isAuthor = user?.id === author.id;
+  const isAuthor = user?.id === post.author.id;
 
   return (
     <div className="bg-white rounded-xl overflow-hidden mb-4 card-shadow animate-fade-in">
       <div className="p-4">
         <div className="flex items-start justify-between">
-          <Link to={`/profile/${author.username}`} className="flex items-center space-x-3 group">
+          <Link to={`/profile/${post.author.username}`} className="flex items-center space-x-3 group">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={author.avatar || "/placeholder.svg"} alt={author.name} />
-              <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={post.author.avatar} alt={post.author.name} />
+              <AvatarFallback>{post.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-medium group-hover:text-social-blue transition-colors text-left">
-                {author.name}
+                {post.author.name}
               </h3>
               <p className="text-sm text-gray-500">
-                @{author.username} · {formatDate(createdAt)}
+                @{post.author.username} · {formatDate(post.createdAt)}
               </p>
             </div>
           </Link>
@@ -288,37 +255,37 @@ const Post = ({
           <div className="text-gray-800 whitespace-pre-line prose prose-sm max-w-none">
             <div className="prose prose-sm max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content}
+                {post.content}
               </ReactMarkdown>
             </div>
           </div>
         </div>
 
-        {sharedPost && (
+        {post.sharedPost && (
           <div className="mt-3 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={sharedPost.author.avatar || "/placeholder.svg"} alt={sharedPost.author.name} />
-                <AvatarFallback>{sharedPost.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={post.sharedPost.author.avatar} alt={post.sharedPost.author.name} />
+                <AvatarFallback>{post.sharedPost.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
-                <span className="font-medium text-sm">{sharedPost.author.name}</span>
-                <span className="text-xs text-gray-500 ml-1">@{sharedPost.author.username} · {formatDate(sharedPost.createdAt)}</span>
+                <span className="font-medium text-sm">{post.sharedPost.author.name}</span>
+                <span className="text-xs text-gray-500 ml-1">@{post.sharedPost.author.username} · {formatDate(post.sharedPost.createdAt)}</span>
               </div>
             </div>
             <div className="mt-2 text-left">
               <div className="text-gray-800 text-sm">
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {sharedPost.content}
+                    {post.sharedPost.content}
                   </ReactMarkdown>
                 </div>
               </div>
             </div>
-            {sharedPost.image && (
+            {post.sharedPost.image && (
               <div className="mt-2 rounded-lg overflow-hidden">
                 <img
-                  src={sharedPost.image}
+                  src={post.sharedPost.image}
                   alt="Shared post content"
                   className="w-full h-auto object-cover max-h-64"
                 />
@@ -327,12 +294,12 @@ const Post = ({
           </div>
         )}
 
-        {image && (
+        {post.image && (
           <div className="mt-3 rounded-lg overflow-hidden">
             <img
-              src={image}
+              src={post.image}
               alt="Post content"
-              className="w-full h-auto object-cover max-h-96"
+              className="w-full h-auto object-cover max-h-[36rem]"
             />
           </div>
         )}
@@ -355,7 +322,7 @@ const Post = ({
             onClick={toggleComments}
           >
             <MessageSquare className="h-4 w-4" />
-            <span>{comments}</span>
+            <span>{post.comments}</span>
           </Button>
 
           <Button
@@ -370,7 +337,7 @@ const Post = ({
         </div>
       </div>
 
-      {showComments && <CommentSection postId={id} />}
+      {showComments && <CommentSection postId={post.id} />}
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -407,15 +374,15 @@ const Post = ({
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={author.avatar || "/placeholder.svg"} alt={author.name} />
-                  <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={post.author.avatar} alt={post.author.name} />
+                  <AvatarFallback>{post.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">{author.name}</span>
+                <span className="text-sm font-medium">{post.author.name}</span>
               </div>
               <div className="text-sm mt-2 line-clamp-2 text-left">
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {content}
+                    {post.content}
                   </ReactMarkdown>
                 </div>
               </div>

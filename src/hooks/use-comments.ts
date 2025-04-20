@@ -7,12 +7,12 @@ import { toast } from "@/components/ui/use-toast";
 
 export interface Comment {
   id: string;
-  user_id: string;
+  userId: string;
   author?: User;
-  post_id: string;
+  postId: string;
   content: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCommentData {
@@ -22,13 +22,13 @@ export interface CreateCommentData {
 export const useComments = (postId: string, limit = 10) => {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
-  
+
   const { data, isLoading, error } = useQuery<Comment[]>({
     queryKey: ["comments", postId, page, limit],
     queryFn: () => api.get<Comment[]>(`/posts/${postId}/comments?limit=${limit}&offset=${(page - 1) * limit}`),
     enabled: !!postId,
   });
-  
+
   const createComment = useMutation<Comment, Error, CreateCommentData>({
     mutationFn: (comment: CreateCommentData) => api.post<Comment>(`/posts/${postId}/comments`, comment),
     onSuccess: () => {
@@ -40,14 +40,14 @@ export const useComments = (postId: string, limit = 10) => {
       });
     },
   });
-  
+
   interface UpdateCommentParams {
     commentId: string;
     content: string;
   }
-  
+
   const updateComment = useMutation<Comment, Error, UpdateCommentParams>({
-    mutationFn: ({ commentId, content }: UpdateCommentParams) => 
+    mutationFn: ({ commentId, content }: UpdateCommentParams) =>
       api.put<Comment>(`/posts/comments/${commentId}`, { content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -57,7 +57,7 @@ export const useComments = (postId: string, limit = 10) => {
       });
     },
   });
-  
+
   const deleteComment = useMutation<void, Error, string>({
     mutationFn: (commentId: string) => api.delete<void>(`/posts/comments/${commentId}`),
     onSuccess: () => {
@@ -69,7 +69,7 @@ export const useComments = (postId: string, limit = 10) => {
       });
     },
   });
-  
+
   return {
     comments: data || [],
     isLoading,

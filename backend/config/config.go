@@ -45,6 +45,8 @@ type AWSConfig struct {
 	Bucket          string
 	AccessKeyID     string
 	SecretAccessKey string
+	Endpoint        string
+	CdnURL          string
 }
 
 // EmailConfig holds email-specific configuration
@@ -99,6 +101,8 @@ func New() *Config {
 			Bucket:          getEnv("AWS_BUCKET", "socialnet-uploads"),
 			AccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
 			SecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
+			Endpoint:        getEnv("AWS_ENDPOINT", ""),
+			CdnURL:          getEnv("AWS_CDN_URL", ""),
 		},
 		Email: EmailConfig{
 			SMTPHost:     getEnv("EMAIL_SMTP_HOST", "smtp.example.com"),

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	"gorm.io/gorm/clause"
 	"socialnet/model"
 
 	"github.com/google/uuid"
@@ -167,11 +169,11 @@ func (r *PostRepo) SearchPosts(query string, filter model.Pagination) ([]model.P
 }
 
 // Like adds a like to a post
-func (r *PostRepo) Like(userID, postID uuid.UUID) error {
+func (r *PostRepo) Like(userID, postID uuid.UUID) (int, error) {
 	// Use transaction to handle like creation and counter update
 	tx := r.db.Begin()
 	if tx.Error != nil {
-		return tx.Error
+		return 0, tx.Error
 	}
 
 	like := model.Like{
@@ -182,42 +184,45 @@ func (r *PostRepo) Like(userID, postID uuid.UUID) error {
 	// Create like
 	if err := tx.Create(&like).Error; err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
+	var updatedPost model.Post
 	// Increment post's likes_count
-	if err := tx.Model(&model.Post{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count + 1")).Error; err != nil {
+	if err := tx.Model(&updatedPost).Clauses(clause.Returning{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count + 1")).Error; err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
-	return tx.Commit().Error
+	return updatedPost.LikesCount, tx.Commit().Error
 }
 
 // Unlike removes a like from a post
-func (r *PostRepo) Unlike(userID, postID uuid.UUID) error {
+func (r *PostRepo) Unlike(userID, postID uuid.UUID) (int, error) {
 	// Use transaction to handle like removal and counter update
 	tx := r.db.Begin()
 	if tx.Error != nil {
-		return tx.Error
+		return 0, tx.Error
 	}
 
 	// Delete like
 	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&model.Like{})
 	if result.Error != nil {
 		tx.Rollback()
-		return result.Error
+		return 0, result.Error
 	}
 
-	// If like was found and deleted, decrement counter
-	if result.RowsAffected > 0 {
-		if err := tx.Model(&model.Post{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count - 1")).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return 0, errors.New("like not found")
+	}
+	var updatedPost model.Post
+	if err := tx.Model(&updatedPost).Clauses(clause.Returning{}).Where("id = ?", postID).Update("likes_count", gorm.Expr("likes_count - 1")).Error; err != nil {
+		tx.Rollback()
+		return 0, err
 	}
 
-	return tx.Commit().Error
+	return updatedPost.LikesCount, tx.Commit().Error
 }
 
 // IsLiked checks if a post is liked by a user
@@ -227,28 +232,34 @@ func (r *PostRepo) IsLiked(userID, postID uuid.UUID) (bool, error) {
 	return count > 0, err
 }
 
-// BatchIsLiked checks if multiple posts are liked by a user
-func (r *PostRepo) BatchIsLiked(userID uuid.UUID, postIDs []uuid.UUID) (map[uuid.UUID]bool, error) {
-	var likes []model.Like
-	result := make(map[uuid.UUID]bool)
-
-	// Initialize all posts as not liked
-	for _, id := range postIDs {
-		result[id] = false
+func (r *PostRepo) FillLikeInfo(userID *uuid.UUID, posts []model.Post) ([]model.Post, error) {
+	if userID == nil || len(posts) == 0 {
+		return posts, nil
 	}
 
-	// Find all likes from user for these posts
+	var likes []model.Like
+
+	postIDs := make([]uuid.UUID, len(posts))
+	for i := range posts {
+		postIDs[i] = posts[i].ID
+	}
+
 	err := r.db.Where("user_id = ? AND post_id IN ?", userID, postIDs).Find(&likes).Error
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
-	// Mark liked posts
+	likedMap := make(map[uuid.UUID]bool)
 	for _, like := range likes {
-		result[like.PostID] = true
+		likedMap[like.PostID] = true
 	}
 
-	return result, nil
+	for i := range posts {
+		isLiked := likedMap[posts[i].ID]
+		posts[i].IsLiked = &isLiked
+	}
+
+	return posts, nil
 }
 
 // CountLikes returns the number of likes for a post

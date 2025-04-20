@@ -3,11 +3,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/use-toast";
-import { User } from "@/contexts/AuthContext";
 
 export interface Post {
   id: string;
-  user_id: string;
+  userId: string;
   author?: {
     id: string;
     name: string;
@@ -16,14 +15,14 @@ export interface Post {
   };
   content: string;
   image?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   likes: number;
   comments: number;
   shares: number;
-  is_liked?: boolean;
-  shared_post_id?: string;
-  shared_post?: Post;
+  isLiked?: boolean;
+  sharedPostId?: string;
+  sharedPost?: Post;
 }
 
 export interface CreatePostData {
@@ -38,25 +37,25 @@ export interface SharePostData {
 export const usePosts = (userId?: string, limit = 10) => {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
-  
+
   // Calculate offset based on page and limit
   const offset = (page - 1) * limit;
-  
+
   // Construct query key based on parameters
-  const queryKey = userId 
-    ? ["posts", userId, page, limit] 
+  const queryKey = userId
+    ? ["posts", userId, page, limit]
     : ["posts", page, limit];
-  
+
   // Construct endpoint URL based on parameters
-  const endpoint = userId 
-    ? `/posts?user_id=${userId}&limit=${limit}&offset=${offset}`
+  const endpoint = userId
+    ? `/posts?userId=${userId}&limit=${limit}&offset=${offset}`
     : `/posts?limit=${limit}&offset=${offset}`;
-  
+
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: queryKey,
     queryFn: () => api.get<Post[]>(endpoint),
   });
-  
+
   const createPost = useMutation<Post, Error, CreatePostData>({
     mutationFn: (postData: CreatePostData) => api.post<Post>('/posts', postData),
     onSuccess: () => {
@@ -68,7 +67,7 @@ export const usePosts = (userId?: string, limit = 10) => {
       });
     },
   });
-  
+
   const likePost = useMutation<{ likes: number }, Error, string>({
     mutationFn: (postId: string) => api.post<{ likes: number }>(`/posts/${postId}/like`),
     onSuccess: (data, postId) => {
@@ -77,7 +76,7 @@ export const usePosts = (userId?: string, limit = 10) => {
       queryClient.invalidateQueries({ queryKey: ["trending"] });
     },
   });
-  
+
   const unlikePost = useMutation<{ likes: number }, Error, string>({
     mutationFn: (postId: string) => api.delete<{ likes: number }>(`/posts/${postId}/like`),
     onSuccess: (data, postId) => {
@@ -86,7 +85,7 @@ export const usePosts = (userId?: string, limit = 10) => {
       queryClient.invalidateQueries({ queryKey: ["trending"] });
     },
   });
-  
+
   const sharePost = useMutation<Post, Error, { postId: string, content: string }>({
     mutationFn: ({ postId, content }) => api.post<Post>(`/posts/${postId}/share`, { content }),
     onSuccess: () => {
@@ -99,7 +98,7 @@ export const usePosts = (userId?: string, limit = 10) => {
       });
     },
   });
-  
+
   const deletePost = useMutation<void, Error, string>({
     mutationFn: (postId: string) => api.delete<void>(`/posts/${postId}`),
     onSuccess: () => {
@@ -112,7 +111,7 @@ export const usePosts = (userId?: string, limit = 10) => {
       });
     },
   });
-  
+
   return {
     posts: data || [],
     isLoading,
@@ -130,12 +129,12 @@ export const usePosts = (userId?: string, limit = 10) => {
 export const useFeed = (limit = 10) => {
   const [page, setPage] = useState(1);
   const offset = (page - 1) * limit;
-  
+
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["feed", page, limit],
     queryFn: () => api.get<Post[]>(`/posts/feed?limit=${limit}&offset=${offset}`),
   });
-  
+
   return {
     posts: data || [],
     isLoading,
@@ -148,12 +147,12 @@ export const useFeed = (limit = 10) => {
 export const useTrendingPosts = (limit = 10) => {
   const [page, setPage] = useState(1);
   const offset = (page - 1) * limit;
-  
+
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["trending", page, limit],
     queryFn: () => api.get<Post[]>(`/posts/trending?limit=${limit}&offset=${offset}`),
   });
-  
+
   return {
     posts: data || [],
     isLoading,
@@ -166,12 +165,12 @@ export const useTrendingPosts = (limit = 10) => {
 export const useSuggestedPosts = (limit = 10) => {
   const [page, setPage] = useState(1);
   const offset = (page - 1) * limit;
-  
+
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["suggested", page, limit],
     queryFn: () => api.get<Post[]>(`/posts/suggested?limit=${limit}&offset=${offset}`),
   });
-  
+
   return {
     posts: data || [],
     isLoading,

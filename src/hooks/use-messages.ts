@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
+import { User } from '@/contexts/AuthContext';
 
 export interface Message {
   id: string;
@@ -27,14 +27,15 @@ export interface Conversation {
   } | null;
 }
 
-export const useConversations = () => {
+export const useConversations = (user?: User) => {
   const queryClient = useQueryClient();
-  
+
   const { data: conversations, isLoading, error } = useQuery<Conversation[]>({
     queryKey: ['conversations'],
     queryFn: () => api.get<Conversation[]>('/conversations'),
+    enabled: !!user
   });
-  
+
   const createConversation = useMutation<Conversation, Error, string>({
     mutationFn: (userId: string) => api.post<Conversation>('/conversations', { recipientId: userId }),
     onSuccess: (newConversation) => {
@@ -46,7 +47,7 @@ export const useConversations = () => {
       return newConversation;
     },
   });
-  
+
   return {
     conversations: conversations || [],
     isLoading,
@@ -55,95 +56,111 @@ export const useConversations = () => {
   };
 };
 
+const messagesLimit = 50
+
 export const useConversation = (conversationId: string) => {
-  return useQuery<Conversation>({
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, error } = useQuery<Conversation>({
     queryKey: ['conversation', conversationId],
     queryFn: () => api.get<Conversation>(`/conversations/${conversationId}`),
     enabled: !!conversationId,
   });
-};
 
-export const useMessages = (conversationId: string, limit = 50) => {
-  const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
-  
-  const { data: messages, isLoading, error } = useQuery<Message[]>({
-    queryKey: ['messages', conversationId, page, limit],
-    queryFn: () => api.get<Message[]>(
-      `/conversations/${conversationId}/messages?limit=${limit}&offset=${(page - 1) * limit}`
-    ),
-    enabled: !!conversationId,
-  });
-  
   const sendMessage = useMutation<Message, Error, string>({
-    mutationFn: (content: string) => 
+    mutationFn: (content: string) =>
       api.post<Message>(`/conversations/${conversationId}/messages`, { content }),
     onSuccess: (newMessage) => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.setQueryData(['messages', conversationId, 1], (oldData: Message[] | undefined) => {
+        return oldData ? [...oldData, newMessage] : [newMessage];
+      });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
-  
+
   const markAsRead = useMutation<void, Error, void>({
     mutationFn: () => api.post<void>(`/conversations/${conversationId}/read`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
-  
+
+  return {
+    data,
+    isLoading,
+    error,
+    markAsRead,
+    sendMessage
+  }
+};
+
+export const useMessages = (conversationId: string) => {
+  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  const { data: messages, isLoading, error } = useQuery<Message[]>({
+    queryKey: ['messages', conversationId, page],
+    queryFn: () => api.get<Message[]>(
+      `/conversations/${conversationId}/messages?limit=${messagesLimit}&offset=${(page - 1) * messagesLimit}`
+    ),
+    enabled: !!conversationId,
+  });
+
+
   return {
     messages: messages || [],
     isLoading,
     error,
     page,
     setPage,
-    sendMessage,
-    markAsRead,
   };
 };
 
 export const useCreateDirectMessage = () => {
   const queryClient = useQueryClient();
-  
+
   interface CreateDirectMessageParams {
-    username: string; 
+    username: string;
     content: string;
   }
-  
+
   return useMutation<Conversation, Error, CreateDirectMessageParams>({
-    mutationFn: async ({ 
-      username, 
-      content 
+    mutationFn: async ({
+      username,
+      content
     }: CreateDirectMessageParams) => {
       // First get the user by username
       const user = await api.get<{ id: string }>(`/users/username/${username}`);
-      
+
       if (!user || !user.id) {
         throw new Error("User not found");
       }
-      
+
       // Then create a conversation with that user
-      const conversation = await api.post<Conversation>('/conversations', { 
-        recipientId: user.id 
+      const conversation = await api.post<Conversation>('/conversations', {
+        recipientId: user.id
       });
-      
+
       if (!conversation || !conversation.id) {
         throw new Error("Failed to create conversation");
       }
-      
-      // Then send the message
-      await api.post<Message>(`/conversations/${conversation.id}/messages`, { 
-        content 
-      });
-      
+
+      if (!!content.trim()) {
+        // Then send the message
+        await api.post<Message>(`/conversations/${conversation.id}/messages`, {
+          content: content.trim()
+        });
+      }
+
       return conversation;
     },
-    onSuccess: () => {
+    onSuccess: (_, { content }) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({
-        title: "Message sent",
-        description: "Your direct message has been sent successfully.",
-      });
+      if (!!content.trim()) {
+        toast({
+          title: "Message sent",
+          description: "Your direct message has been sent successfully.",
+        });
+      }
     },
   });
 };

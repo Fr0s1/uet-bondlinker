@@ -59,16 +59,9 @@ func (pic *PostInteractionController) LikePost(c *gin.Context) {
 	}
 
 	// Add like to database
-	err = pic.repo.Post.Like(userID, postID)
+	likeCount, err := pic.repo.Post.Like(userID, postID)
 	if err != nil {
 		util.RespondWithError(c, http.StatusInternalServerError, "Failed to like post")
-		return
-	}
-
-	// Get updated like count
-	likeCount, err := pic.repo.Post.CountLikes(postID)
-	if err != nil {
-		util.RespondWithSuccess(c, http.StatusCreated, "Post liked successfully", nil)
 		return
 	}
 
@@ -103,16 +96,9 @@ func (pic *PostInteractionController) UnlikePost(c *gin.Context) {
 	}
 
 	// Remove like from database
-	err = pic.repo.Post.Unlike(userID, postID)
+	likeCount, err := pic.repo.Post.Unlike(userID, postID)
 	if err != nil {
 		util.RespondWithError(c, http.StatusInternalServerError, "Failed to unlike post")
-		return
-	}
-
-	// Get updated like count
-	likeCount, err := pic.repo.Post.CountLikes(postID)
-	if err != nil {
-		util.RespondWithSuccess(c, http.StatusOK, "Post unliked successfully", nil)
 		return
 	}
 

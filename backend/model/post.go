@@ -10,23 +10,23 @@ import (
 // Post represents a post in the system
 type Post struct {
 	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID        uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
+	UserID        uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
 	Content       string         `json:"content" gorm:"type:text;not null"`
 	Image         *string        `json:"image,omitempty" gorm:"size:255"`
 	LikesCount    int            `json:"likes" gorm:"default:0"`
 	CommentsCount int            `json:"comments" gorm:"default:0"`
 	SharesCount   int            `json:"shares" gorm:"default:0"`
-	SharedPostID  *uuid.UUID     `json:"shared_post_id,omitempty" gorm:"type:uuid"`
-	CreatedAt     time.Time      `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt     time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	SharedPostID  *uuid.UUID     `json:"sharedPostId,omitempty" gorm:"type:uuid"`
+	CreatedAt     time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt     time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
-	IsLiked       *bool          `json:"is_liked,omitempty" gorm:"-"`
+	IsLiked       *bool          `json:"isLiked,omitempty" gorm:"-"`
 
 	// Relations
 	Author       *User     `json:"author,omitempty" gorm:"foreignKey:UserID"`
 	LikesList    []Like    `json:"-" gorm:"foreignKey:PostID"`
 	CommentsList []Comment `json:"-" gorm:"foreignKey:PostID"`
-	SharedPost   *Post     `json:"shared_post,omitempty" gorm:"foreignKey:SharedPostID"`
+	SharedPost   *Post     `json:"sharedPost,omitempty" gorm:"foreignKey:SharedPostID"`
 }
 
 // TableName specifies the table name for Post model
@@ -69,11 +69,11 @@ type PostShare struct {
 // Comment represents a comment on a post
 type Comment struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID    uuid.UUID      `json:"user_id" gorm:"type:uuid;not null"`
-	PostID    uuid.UUID      `json:"post_id" gorm:"type:uuid;not null"`
+	UserID    uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
+	PostID    uuid.UUID      `json:"postId" gorm:"type:uuid;not null"`
 	Content   string         `json:"content" gorm:"type:text;not null"`
-	CreatedAt time.Time      `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	CreatedAt time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// Relations
@@ -106,9 +106,9 @@ type CommentUpdate struct {
 
 // Like represents a like on a post
 type Like struct {
-	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid;primaryKey"`
-	PostID    uuid.UUID `json:"post_id" gorm:"type:uuid;primaryKey"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UserID    uuid.UUID `json:"userId" gorm:"type:uuid;primaryKey"`
+	PostID    uuid.UUID `json:"postId" gorm:"type:uuid;primaryKey"`
+	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
 
 	// Relations
 	User User `json:"-" gorm:"foreignKey:UserID"`

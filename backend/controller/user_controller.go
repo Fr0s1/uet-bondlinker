@@ -52,12 +52,9 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check follow status for each user
-	if currentUserID != nil {
-		for i := range users {
-			isFollowed, _ := uc.repo.User.IsFollowing(*currentUserID, users[i].ID)
-			users[i].IsFollowed = &isFollowed
-		}
+	if users, err = uc.repo.User.FillFollowingInfo(currentUserID, users); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", users)
@@ -209,6 +206,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		user.Avatar = input.Avatar
 	}
 
+	if input.Cover != nil {
+		user.Cover = input.Cover
+	}
+
 	if input.Location != nil {
 		user.Location = input.Location
 	}
@@ -344,10 +345,9 @@ func (uc *UserController) GetFollowers(c *gin.Context) {
 	if currentUserIDStr, err := middleware.GetUserID(c); err == nil {
 		currentUserID, _ := uuid.Parse(currentUserIDStr)
 
-		// Mark which users the current user is following
-		for i := range followers {
-			isFollowed, _ := uc.repo.User.IsFollowing(currentUserID, followers[i].ID)
-			followers[i].IsFollowed = &isFollowed
+		if followers, err = uc.repo.User.FillFollowingInfo(&currentUserID, followers); err != nil {
+			util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+			return
 		}
 	}
 
@@ -380,10 +380,9 @@ func (uc *UserController) GetFollowing(c *gin.Context) {
 	if currentUserIDStr, err := middleware.GetUserID(c); err == nil {
 		currentUserID, _ := uuid.Parse(currentUserIDStr)
 
-		// Mark which users the current user is following
-		for i := range following {
-			isFollowed, _ := uc.repo.User.IsFollowing(currentUserID, following[i].ID)
-			following[i].IsFollowed = &isFollowed
+		if following, err = uc.repo.User.FillFollowingInfo(&currentUserID, following); err != nil {
+			util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+			return
 		}
 	}
 
@@ -413,10 +412,9 @@ func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
 		return
 	}
 
-	// Mark which users the current user is following
-	for i := range suggestedUsers {
-		isFollowed, _ := uc.repo.User.IsFollowing(userID, suggestedUsers[i].ID)
-		suggestedUsers[i].IsFollowed = &isFollowed
+	if suggestedUsers, err = uc.repo.User.FillFollowingInfo(&userID, suggestedUsers); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", suggestedUsers)

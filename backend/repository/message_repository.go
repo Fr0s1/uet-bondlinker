@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"cmp"
 	"errors"
+	"slices"
 	"socialnet/model"
 
 	"github.com/google/uuid"
@@ -29,11 +31,16 @@ func (r *MessageRepository) CreateConversation(userID1, userID2 uuid.UUID) (*mod
 		return nil, errors.New("recipient not found")
 	}
 
+	ids := []uuid.UUID{userID1, userID2}
+	slices.SortStableFunc(ids, func(a, b uuid.UUID) int {
+		return cmp.Compare(a.String(), b.String())
+	})
+
 	// Check if conversation already exists
 	var conversation model.Conversation
 	err := r.db.Where(
-		"(user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)",
-		userID1, userID2, userID2, userID1,
+		"user_id1 = ? AND user_id2 = ?",
+		ids[0], ids[1],
 	).First(&conversation).Error
 
 	if err == nil {
@@ -47,8 +54,8 @@ func (r *MessageRepository) CreateConversation(userID1, userID2 uuid.UUID) (*mod
 
 	// Create new conversation
 	conversation = model.Conversation{
-		UserID1: userID1,
-		UserID2: userID2,
+		UserID1: ids[0],
+		UserID2: ids[1],
 	}
 
 	if err := r.db.Create(&conversation).Error; err != nil {
@@ -87,8 +94,7 @@ func (r *MessageRepository) FindConversations(userID uuid.UUID) ([]model.Convers
 		// Get last message in this conversation
 		var lastMessage model.Message
 		lastMessageErr := r.db.Where(
-			"(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
-			conv.UserID1, conv.UserID2, conv.UserID2, conv.UserID1,
+			"conversation_id = ?", conv.ID,
 		).Order("created_at DESC").First(&lastMessage).Error
 
 		var lastMessageBrief *model.MessageBrief
@@ -141,17 +147,9 @@ func (r *MessageRepository) CreateMessage(message *model.Message) error {
 // FindMessages gets all messages in a conversation
 func (r *MessageRepository) FindMessages(conversationID uuid.UUID, filter model.MessageFilter) ([]model.Message, error) {
 	var messages []model.Message
-
-	// Get the users in the conversation
-	user1, user2, err := r.GetConversationUsers(conversationID)
-	if err != nil {
-		return nil, err
-	}
-
 	// Get messages between these users
 	query := r.db.Where(
-		"(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)",
-		user1, user2, user2, user1,
+		"conversation_id = ?", conversationID,
 	).Order("created_at DESC")
 
 	// Apply pagination if specified
@@ -199,6 +197,6 @@ func (r *MessageRepository) MarkMessagesAsRead(conversationID, userID uuid.UUID)
 	}
 
 	return r.db.Model(&model.Message{}).
-		Where("sender_id = ? AND recipient_id = ? AND is_read = ?", otherUserID, userID, false).
+		Where("conversation_id = ? AND sender_id = ? AND recipient_id = ? AND is_read = ?", conversationID, otherUserID, userID, false).
 		Update("is_read", true).Error
 }

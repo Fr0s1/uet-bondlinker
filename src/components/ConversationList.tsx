@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversations } from '@/hooks/use-messages';
 
 interface Conversation {
   id: string;
@@ -28,16 +29,10 @@ interface ConversationListProps {
 
 const ConversationList = ({ selectedConversationId, onSelectConversation }: ConversationListProps) => {
   const { user } = useAuth();
-  
+
   // Fetch conversations with proper typing
-  const { data: conversations, isLoading } = useQuery<Conversation[]>({
-    queryKey: ['conversations'],
-    queryFn: async () => {
-      return api.get<Conversation[]>('/conversations');
-    },
-    enabled: !!user
-  });
-  
+  const { conversations, isLoading } = useConversations(user)
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl p-4 h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
@@ -46,7 +41,7 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
       </div>
     );
   }
-  
+
   if (!conversations || conversations.length === 0) {
     return (
       <div className="bg-white rounded-xl p-4 h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
@@ -57,28 +52,27 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
       </div>
     );
   }
-  
+
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow h-[calc(100vh-120px)] flex flex-col">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold text-gray-800">Messages</h2>
       </div>
-      
+
       <div className="overflow-y-auto flex-grow">
         {conversations.map((conversation) => (
-          <div 
+          <div
             key={conversation.id}
-            className={`p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-              selectedConversationId === conversation.id ? 'bg-gray-100' : ''
-            }`}
+            className={`p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${selectedConversationId === conversation.id ? 'bg-gray-100' : ''
+              }`}
             onClick={() => onSelectConversation(conversation.id)}
           >
             <div className="flex items-center">
               <Avatar className="h-12 w-12 mr-3">
-                <AvatarImage src={conversation.recipient.avatar || "/placeholder.svg"} alt={conversation.recipient.name} />
+                <AvatarImage src={conversation.recipient.avatar} alt={conversation.recipient.name} />
                 <AvatarFallback>{conversation.recipient.name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-grow min-w-0">
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium text-gray-900 truncate">{conversation.recipient.name}</h3>
@@ -88,16 +82,15 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
                     </span>
                   )}
                 </div>
-                
+
                 {conversation.lastMessage && (
-                  <p className={`text-sm truncate ${
-                    conversation.lastMessage.isRead ? 'text-gray-500' : 'text-gray-900 font-medium'
-                  }`}>
+                  <p className={`text-sm truncate ${conversation.lastMessage.isRead ? 'text-gray-500' : 'text-gray-900 font-medium'
+                    }`}>
                     {conversation.lastMessage.content}
                   </p>
                 )}
               </div>
-              
+
               {conversation.lastMessage && !conversation.lastMessage.isRead && (
                 <div className="ml-2 w-2 h-2 bg-social-blue rounded-full"></div>
               )}

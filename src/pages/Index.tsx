@@ -46,32 +46,7 @@ const Index = () => {
         {followingPosts.map((post) => (
           <Post
             key={post.id}
-            id={post.id}
-            author={{
-              id: post.user_id,
-              name: post.author?.name || "Unknown User",
-              username: post.author?.username || "unknown",
-              avatar: post.author?.avatar || "/placeholder.svg",
-            }}
-            content={post.content}
-            image={post.image}
-            createdAt={post.created_at}
-            likes={post.likes}
-            comments={post.comments}
-            shares={post.shares || 0}
-            isLiked={post.is_liked}
-            sharedPost={post.shared_post ? {
-              id: post.shared_post.id,
-              author: {
-                id: post.shared_post.user_id,
-                name: post.shared_post.author?.name || "Unknown User",
-                username: post.shared_post.author?.username || "unknown",
-                avatar: post.shared_post.author?.avatar || "/placeholder.svg",
-              },
-              content: post.shared_post.content,
-              image: post.shared_post.image,
-              createdAt: post.shared_post.created_at,
-            } : undefined}
+            post={post}
           />
         ))}
       </div>
@@ -102,32 +77,7 @@ const Index = () => {
         {suggestedPosts.map((post) => (
           <Post
             key={post.id}
-            id={post.id}
-            author={{
-              id: post.user_id,
-              name: post.author?.name || "Unknown User",
-              username: post.author?.username || "unknown",
-              avatar: post.author?.avatar || "/placeholder.svg",
-            }}
-            content={post.content}
-            image={post.image}
-            createdAt={post.created_at}
-            likes={post.likes}
-            comments={post.comments}
-            shares={post.shares || 0}
-            isLiked={post.is_liked}
-            sharedPost={post.shared_post ? {
-              id: post.shared_post.id,
-              author: {
-                id: post.shared_post.user_id,
-                name: post.shared_post.author?.name || "Unknown User",
-                username: post.shared_post.author?.username || "unknown",
-                avatar: post.shared_post.author?.avatar || "/placeholder.svg",
-              },
-              content: post.shared_post.content,
-              image: post.shared_post.image,
-              createdAt: post.shared_post.created_at,
-            } : undefined}
+            post={post}
           />
         ))}
       </div>
@@ -140,20 +90,9 @@ const Index = () => {
         {user && (
           <div className="sticky top-20">
             <UserProfile
-              user={{
-                id: user.id,
-                name: user.name,
-                username: user.username,
-                avatar: user.avatar || "/placeholder.svg",
-                bio: user.bio || "No bio provided",
-                location: user.location,
-                website: user.website,
-                joinedDate: user.createdAt,
-                followers: user.followers || 0,
-                following: user.following || 0,
-                isFollowing: false,
-              }}
+              user={user}
               isCurrentUser={true}
+              size='small'
             />
           </div>
         )}

@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Link } from 'react-router';
 import EmojiPicker from 'emoji-picker-react';
+import { useFileUpload } from '@/hooks/use-upload';
 
 interface UploadResponse {
   imageUrl: string;
@@ -26,13 +27,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  const uploadImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('image', file);
-      return api.post<UploadResponse>('/uploads/image', formData, true);
-    }
-  });
+  const uploadImageMutation = useFileUpload()
 
   const createPostMutation = useMutation({
     mutationFn: (postData: { content: string, image?: string }) =>
@@ -120,7 +115,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
 
       if (image) {
         const response = await uploadImageMutation.mutateAsync(image);
-        imageUrl = response.imageUrl;
+        imageUrl = response.url;
       }
 
       await createPostMutation.mutateAsync({
@@ -156,7 +151,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
       <form onSubmit={handleSubmit}>
         <div className="flex items-start space-x-3">
           <Avatar className="h-10 w-10 mt-1">
-            <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+            <AvatarImage src={user?.avatar} alt={user?.name} />
             <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
           </Avatar>
 

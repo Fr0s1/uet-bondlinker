@@ -16,7 +16,8 @@ type UserRepository interface {
 	FindAll(filter model.UserFilter) ([]model.User, error)
 	Follow(followerID, followingID uuid.UUID) error
 	Unfollow(followerID, followingID uuid.UUID) error
-	IsFollowing(followerID, followingID uuid.UUID) (bool, error)
+	IsFollowing(followerID uuid.UUID, following uuid.UUID) (bool, error)
+	FillFollowingInfo(currentUserID *uuid.UUID, listUsers []model.User) ([]model.User, error)
 	GetFollowers(userID uuid.UUID, filter model.FollowFilter) ([]model.User, error)
 	GetFollowing(userID uuid.UUID, filter model.FollowFilter) ([]model.User, error)
 	CountFollowers(userID uuid.UUID) (int, error)
@@ -35,9 +36,10 @@ type PostRepository interface {
 	FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.Post, error)
 	FindTrending(filter model.Pagination) ([]model.Post, error)
 	SearchPosts(query string, filter model.Pagination) ([]model.Post, error)
-	Like(userID, postID uuid.UUID) error
-	Unlike(userID, postID uuid.UUID) error
+	Like(userID, postID uuid.UUID) (int, error)
+	Unlike(userID, postID uuid.UUID) (int, error)
 	IsLiked(userID, postID uuid.UUID) (bool, error)
+	FillLikeInfo(userID *uuid.UUID, posts []model.Post) ([]model.Post, error)
 	CountLikes(postID uuid.UUID) (int, error)
 	Share(userID, postID uuid.UUID, content string) (*model.Post, error)
 	GetSuggestedPosts(userID uuid.UUID, filter model.Pagination) ([]model.Post, error)
