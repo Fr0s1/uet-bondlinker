@@ -27,6 +27,8 @@ const Register = () => {
 
     if (!name.trim()) {
       newErrors.name = 'Name is required';
+    } else if (name.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
     }
 
     if (!username.trim()) {
@@ -89,7 +91,7 @@ const Register = () => {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
@@ -101,7 +103,7 @@ const Register = () => {
               {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -113,7 +115,7 @@ const Register = () => {
               {errors.username && <p className="text-red-500 text-sm">{errors.username}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -126,7 +128,7 @@ const Register = () => {
               {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -138,7 +140,7 @@ const Register = () => {
               {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"

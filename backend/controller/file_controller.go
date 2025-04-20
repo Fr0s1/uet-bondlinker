@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"socialnet/util"
@@ -61,7 +62,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	validExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
 	if !validExts[ext] {
-		util.RespondWithError(c, http.StatusBadRequest, "Invalid file type (only images allowed)")
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid file type (only .jpg, .png, .gif and .webp)")
 		return
 	}
 
@@ -87,6 +88,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	})
 
 	if err != nil {
+		log.Printf("Failed to upload file to S3: %v", err)
 		util.RespondWithError(c, http.StatusInternalServerError, "Failed to upload file")
 		return
 	}
