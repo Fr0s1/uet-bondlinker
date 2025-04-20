@@ -299,7 +299,7 @@ const Post = ({
             <img
               src={post.image}
               alt="Post content"
-              className="w-full h-auto object-cover max-h-96"
+              className="w-full h-auto object-cover max-h-[36rem]"
             />
           </div>
         )}
