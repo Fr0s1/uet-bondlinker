@@ -29,11 +29,20 @@ type FileController struct {
 
 // NewFileController creates a new file controller
 func NewFileController(cfg *config.Config) *FileController {
-	c, err := awsconfig.LoadDefaultConfig(context.Background(),
-		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.AWS.AccessKeyID, cfg.AWS.SecretAccessKey, "")),
-		awsconfig.WithRegion(cfg.AWS.Region),
-		awsconfig.WithBaseEndpoint(cfg.AWS.Endpoint),
-	)
+	var loadOptions []func(*awsconfig.LoadOptions) error
+	if cfg.AWS.AccessKeyID != "" {
+		loadOptions = append(loadOptions, awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.AWS.AccessKeyID, cfg.AWS.SecretAccessKey, "")))
+	}
+
+	if cfg.AWS.Region != "" {
+		loadOptions = append(loadOptions, awsconfig.WithRegion(cfg.AWS.Region))
+	}
+
+	if cfg.AWS.Endpoint != "" {
+		loadOptions = append(loadOptions, awsconfig.WithBaseEndpoint(cfg.AWS.Endpoint))
+	}
+
+	c, err := awsconfig.LoadDefaultConfig(context.Background(), loadOptions...)
 
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create AWS session: %v", err))
