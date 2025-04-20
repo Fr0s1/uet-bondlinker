@@ -28,8 +28,8 @@ type Notification struct {
 	RelatedEntityID *uuid.UUID       `json:"relatedEntityId,omitempty" gorm:"type:uuid"`
 	EntityType      *string          `json:"entityType,omitempty"`
 	IsRead          bool             `json:"isRead" gorm:"default:false"`
-	CreatedAt       time.Time        `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt       time.Time        `json:"updated_at" gorm:"autoUpdateTime"`
+	CreatedAt       time.Time        `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt       time.Time        `json:"updatedAt" gorm:"autoUpdateTime"`
 
 	// Relations
 	User   User `json:"-" gorm:"foreignKey:UserID"`

@@ -2,40 +2,44 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
 	"path/filepath"
+	"socialnet/config"
 	"socialnet/util"
 	"strings"
 	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
-	"socialnet/config"
 )
 
+var validExts = map[string]struct{}{".jpg": {}, ".jpeg": {}, ".png": {}, ".gif": {}, ".webp": {}}
+
 type FileController struct {
-	s3Client *s3.S3
+	s3Client *s3.Client
 	cfg      *config.Config
 }
 
 // NewFileController creates a new file controller
 func NewFileController(cfg *config.Config) *FileController {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(cfg.AWS.Region),
-	})
+	c, err := awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.AWS.AccessKeyID, cfg.AWS.SecretAccessKey, "")),
+		awsconfig.WithRegion(cfg.AWS.Region),
+		awsconfig.WithBaseEndpoint(cfg.AWS.Endpoint),
+	)
 
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create AWS session: %v", err))
 	}
 
-	s3Client := s3.New(sess)
+	s3Client := s3.NewFromConfig(c)
 
 	return &FileController{
 		s3Client: s3Client,
@@ -60,8 +64,8 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	// Validate file type
 	ext := strings.ToLower(filepath.Ext(header.Filename))
-	validExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
-	if !validExts[ext] {
+	_, found := validExts[ext]
+	if !found {
 		util.RespondWithError(c, http.StatusBadRequest, "Invalid file type (only .jpg, .png, .gif and .webp)")
 		return
 	}
@@ -79,12 +83,13 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	fileKey := fmt.Sprintf("uploads/%s", fileName)
 
 	// Upload to S3
-	_, err = fc.s3Client.PutObject(&s3.PutObjectInput{
-		Bucket:      aws.String(fc.cfg.AWS.Bucket),
-		Key:         aws.String(fileKey),
+	contentType := http.DetectContentType(fileContent)
+	_, err = fc.s3Client.PutObject(c, &s3.PutObjectInput{
+		Bucket:      &fc.cfg.AWS.Bucket,
+		Key:         &fileKey,
 		Body:        bytes.NewReader(fileContent),
-		ContentType: aws.String(http.DetectContentType(fileContent)),
-		ACL:         aws.String("public-read"),
+		ContentType: &contentType,
+		ACL:         types.ObjectCannedACLPublicRead,
 	})
 
 	if err != nil {
@@ -93,9 +98,12 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
+	cdnURL := fc.cfg.AWS.CdnURL
+	if cdnURL == "" {
+		cdnURL = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", fc.cfg.AWS.Bucket, fc.cfg.AWS.Region)
+	}
 	// Generate file URL
-	fileURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s",
-		fc.cfg.AWS.Bucket, fc.cfg.AWS.Region, fileKey)
+	fileURL := fmt.Sprintf("%s/%s", cdnURL, fileKey)
 
 	util.RespondWithSuccess(c, http.StatusOK, "File uploaded successfully", gin.H{
 		"url":      fileURL,

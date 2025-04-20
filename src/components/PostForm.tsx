@@ -156,7 +156,7 @@ const PostForm = ({ onPostCreated }: { onPostCreated?: () => void }) => {
             <form onSubmit={handleSubmit}>
                 <div className="flex items-start space-x-3">
                     <Avatar className="h-10 w-10 mt-1">
-                        <AvatarImage src={user?.avatar || "/user-avatar.png"} alt={user?.name} />
+                        <AvatarImage src={user?.avatar} alt={user?.name} />
                         <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
 

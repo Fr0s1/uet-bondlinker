@@ -90,19 +90,7 @@ const Index = () => {
         {user && (
           <div className="sticky top-20">
             <UserProfile
-              user={{
-                id: user.id,
-                name: user.name,
-                username: user.username,
-                avatar: user.avatar || "/user-avatar.png",
-                bio: user.bio || "No bio provided",
-                location: user.location,
-                website: user.website,
-                joinedDate: user.createdAt,
-                followers: user.followers || 0,
-                following: user.following || 0,
-                isFollowing: false,
-              }}
+              user={user}
               isCurrentUser={true}
             />
           </div>

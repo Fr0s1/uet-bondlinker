@@ -35,8 +35,8 @@ type PostRepository interface {
 	FindFeed(userID uuid.UUID, filter model.Pagination) ([]model.Post, error)
 	FindTrending(filter model.Pagination) ([]model.Post, error)
 	SearchPosts(query string, filter model.Pagination) ([]model.Post, error)
-	Like(userID, postID uuid.UUID) error
-	Unlike(userID, postID uuid.UUID) error
+	Like(userID, postID uuid.UUID) (int, error)
+	Unlike(userID, postID uuid.UUID) (int, error)
 	IsLiked(userID, postID uuid.UUID) (bool, error)
 	CountLikes(postID uuid.UUID) (int, error)
 	Share(userID, postID uuid.UUID, content string) (*model.Post, error)

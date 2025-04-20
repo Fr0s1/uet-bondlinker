@@ -44,7 +44,7 @@ const CommentSection = ({ postId }: { postId: string }) => {
     <div className="bg-gray-50 border-t p-4">
       <form onSubmit={handleSubmitComment} className="flex items-start space-x-3 mb-4">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={user?.avatar || "/user-avatar.png"} alt={user?.name || "User"} />
+          <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
           <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
 
@@ -78,7 +78,7 @@ const CommentSection = ({ postId }: { postId: string }) => {
             <div key={comment.id} className="flex space-x-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src={comment.author?.avatar || "/user-avatar.png"}
+                  src={comment.author?.avatar}
                   alt={comment.author?.name || "User"}
                 />
                 <AvatarFallback>

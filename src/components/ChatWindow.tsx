@@ -95,7 +95,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
       <div className="p-4 border-b flex items-center">
         <Avatar className="h-10 w-10 mr-3">
           <AvatarImage
-            src={conversation.recipient.avatar || "/user-avatar.png"}
+            src={conversation.recipient.avatar}
             alt={conversation.recipient.name}
           />
           <AvatarFallback>

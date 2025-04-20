@@ -219,7 +219,7 @@ const Post = ({
         <div className="flex items-start justify-between">
           <Link to={`/profile/${post.author.username}`} className="flex items-center space-x-3 group">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={post.author.avatar || "/user-avatar.png"} alt={post.author.name} />
+              <AvatarImage src={post.author.avatar} alt={post.author.name} />
               <AvatarFallback>{post.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
@@ -265,7 +265,7 @@ const Post = ({
           <div className="mt-3 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={post.sharedPost.author.avatar || "/user-avatar.png"} alt={post.sharedPost.author.name} />
+                <AvatarImage src={post.sharedPost.author.avatar} alt={post.sharedPost.author.name} />
                 <AvatarFallback>{post.sharedPost.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
@@ -374,7 +374,7 @@ const Post = ({
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={post.author.avatar || "/user-avatar.png"} alt={post.author.name} />
+                  <AvatarImage src={post.author.avatar} alt={post.author.name} />
                   <AvatarFallback>{post.author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{post.author.name}</span>

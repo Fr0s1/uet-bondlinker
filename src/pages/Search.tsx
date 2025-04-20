@@ -80,7 +80,7 @@ const Search = () => {
                                         className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
                                     >
                                         <Avatar className="h-12 w-12">
-                                            <AvatarImage src={user.avatar || "/user-avatar.png"} alt={user.name} />
+                                            <AvatarImage src={user.avatar} alt={user.name} />
                                             <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div className="ml-4">
@@ -117,7 +117,7 @@ const Search = () => {
                                             id: post.user_id,
                                             name: post.author?.name || "Unknown User",
                                             username: post.author?.username || "unknown",
-                                            avatar: post.author?.avatar || "/user-avatar.png",
+                                            avatar: post.author?.avatar,
                                         }}
                                         content={post.content}
                                         image={post.image}
@@ -132,7 +132,7 @@ const Search = () => {
                                                 id: post.shared_post.user_id,
                                                 name: post.shared_post.author?.name || "Unknown User",
                                                 username: post.shared_post.author?.username || "unknown",
-                                                avatar: post.shared_post.author?.avatar || "/user-avatar.png",
+                                                avatar: post.shared_post.author?.avatar,
                                             },
                                             content: post.shared_post.content,
                                             image: post.shared_post.image,
@@ -183,7 +183,7 @@ const Search = () => {
                             className="flex items-center p-4 bg-white rounded-xl card-shadow hover:shadow-md transition-shadow"
                         >
                             <Avatar className="h-12 w-12">
-                                <AvatarImage src={user.avatar || "/user-avatar.png"} alt={user.name} />
+                                <AvatarImage src={user.avatar} alt={user.name} />
                                 <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div className="ml-4">
@@ -225,7 +225,7 @@ const Search = () => {
                                 id: post.user_id,
                                 name: post.author?.name || "Unknown User",
                                 username: post.author?.username || "unknown",
-                                avatar: post.author?.avatar || "/user-avatar.png",
+                                avatar: post.author?.avatar,
                             }}
                             content={post.content}
                             image={post.image}
@@ -240,7 +240,7 @@ const Search = () => {
                                     id: post.shared_post.user_id,
                                     name: post.shared_post.author?.name || "Unknown User",
                                     username: post.shared_post.author?.username || "unknown",
-                                    avatar: post.shared_post.author?.avatar || "/user-avatar.png",
+                                    avatar: post.shared_post.author?.avatar,
                                 },
                                 content: post.shared_post.content,
                                 image: post.shared_post.image,

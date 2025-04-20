@@ -43,19 +43,7 @@ const Profile = () => {
       {/* Main Content */}
       <main className="lg:col-span-6 pt-4">
         <UserProfile
-          user={{
-            id: profileUser.id,
-            name: profileUser.name,
-            username: profileUser.username,
-            avatar: profileUser.avatar || "/user-avatar.png",
-            bio: profileUser.bio || "No bio provided",
-            location: profileUser.location,
-            website: profileUser.website,
-            joinedDate: profileUser.createdAt,
-            followers: profileUser.followers || 0,
-            following: profileUser.following || 0,
-            isFollowing: profileUser.isFollowed,
-          }}
+          user={profileUser}
           isCurrentUser={isCurrentUser}
         />
 

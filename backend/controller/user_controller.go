@@ -209,6 +209,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		user.Avatar = input.Avatar
 	}
 
+	if input.Cover != nil {
+		user.Cover = input.Cover
+	}
+
 	if input.Location != nil {
 		user.Location = input.Location
 	}

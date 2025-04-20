@@ -41,7 +41,7 @@ const Trending = () => {
                             id: post.user_id,
                             name: post.author?.name || "Unknown User",
                             username: post.author?.username || "unknown",
-                            avatar: post.author?.avatar || "/user-avatar.png",
+                            avatar: post.author?.avatar,
                         }}
                         content={post.content}
                         image={post.image}
@@ -56,7 +56,7 @@ const Trending = () => {
                                 id: post.shared_post.user_id,
                                 name: post.shared_post.author?.name || "Unknown User",
                                 username: post.shared_post.author?.username || "unknown",
-                                avatar: post.shared_post.author?.avatar || "/user-avatar.png",
+                                avatar: post.shared_post.author?.avatar,
                             },
                             content: post.shared_post.content,
                             image: post.shared_post.image,

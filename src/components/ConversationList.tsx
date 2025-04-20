@@ -69,7 +69,7 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
           >
             <div className="flex items-center">
               <Avatar className="h-12 w-12 mr-3">
-                <AvatarImage src={conversation.recipient.avatar || "/user-avatar.png"} alt={conversation.recipient.name} />
+                <AvatarImage src={conversation.recipient.avatar} alt={conversation.recipient.name} />
                 <AvatarFallback>{conversation.recipient.name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
 
