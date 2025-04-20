@@ -149,10 +149,11 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow animate-fade-in">
       <div className="relative">
-        <div className="h-32 bg-gradient-to-r from-social-blue to-social-darkblue" style={{
+        <div className="h-64 bg-gradient-to-r from-social-blue to-social-darkblue" style={{
           backgroundImage: user.cover ? `url(${user.cover})` : null,
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          backgroundSize: 'cover'
         }}></div>
         {isCurrentUser && (
           <Button
