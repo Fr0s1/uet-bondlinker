@@ -7,7 +7,6 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"io"
@@ -89,7 +88,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	// Generate unique filename
 	uniqueID := uuid.New().String()
 	fileName := fmt.Sprintf("%s-%s%s", time.Now().Format("20060102"), uniqueID, ext)
-	fileKey := fmt.Sprintf("uploads/%s", fileName)
+	fileKey := fmt.Sprintf("/public/uploads/%s", fileName)
 
 	// Upload to S3
 	contentType := http.DetectContentType(fileContent)
@@ -98,7 +97,6 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		Key:         &fileKey,
 		Body:        bytes.NewReader(fileContent),
 		ContentType: &contentType,
-		ACL:         types.ObjectCannedACLPublicRead,
 	})
 
 	if err != nil {
