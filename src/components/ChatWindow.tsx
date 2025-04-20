@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send } from 'lucide-react';
 import MessageBubble from './MessageBubble';
+import { useConversation, useMessages } from '@/hooks/use-messages';
 
 interface Message {
   id: string;
@@ -32,53 +33,25 @@ interface ChatWindowProps {
 
 const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversation with proper typing
-  const { data: conversation, isLoading: isConversationLoading } = useQuery<Conversation>({
-    queryKey: ['conversation', conversationId],
-    queryFn: async () => {
-      return api.get<Conversation>(`/conversations/${conversationId}`);
-    },
-    enabled: !!conversationId
-  });
+  const { data: conversation, isLoading: isConversationLoading, sendMessage, markAsRead } = useConversation(conversationId)
 
   // Fetch messages with proper typing
-  const { data: messages, isLoading: isMessagesLoading } = useQuery<Message[]>({
-    queryKey: ['messages', conversationId],
-    queryFn: async () => {
-      return api.get<Message[]>(`/conversations/${conversationId}/messages`);
-    },
-    enabled: !!conversationId && !!user
-  });
-
-  // Send message mutation
-  const sendMessageMutation = useMutation<Message, Error, string>({
-    mutationFn: async (content: string) => {
-      return api.post<Message>(`/conversations/${conversationId}/messages`, { content });
-    },
-    onSuccess: (newMessage) => {
-      // Update the messages cache
-      queryClient.setQueryData(['messages', conversationId], (oldData: Message[] | undefined) => {
-        return oldData ? [...oldData, newMessage] : [newMessage];
-      });
-
-      // Update conversations list to show latest message
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-
-      // Scroll to bottom
-      scrollToBottom();
-    }
-  });
+  const { messages, isLoading: isMessagesLoading } = useMessages(conversationId)
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newMessage.trim()) return;
 
-    sendMessageMutation.mutate(newMessage);
+    sendMessage.mutate(newMessage, {
+      onSuccess: () => {
+        scrollToBottom();
+      }
+    });
     setNewMessage('');
   };
 
@@ -89,6 +62,12 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (conversation) {
+      markAsRead.mutate()
+    }
+  }, [conversation])
 
   if (isConversationLoading || isMessagesLoading) {
     return (
@@ -160,9 +139,9 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
         />
         <Button
           type="submit"
-          disabled={sendMessageMutation.isPending || !newMessage.trim()}
+          disabled={sendMessage.isPending || !newMessage.trim()}
         >
-          {sendMessageMutation.isPending ? (
+          {sendMessage.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />

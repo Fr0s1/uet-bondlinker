@@ -18,14 +18,14 @@ type User struct {
 	Avatar         *string        `json:"avatar,omitempty" gorm:"size:255"`
 	Location       *string        `json:"location,omitempty" gorm:"size:100"`
 	Website        *string        `json:"website,omitempty" gorm:"size:255"`
-	EmailVerified  bool           `json:"email_verified" gorm:"default:false"`
+	EmailVerified  bool           `json:"emailVerified" gorm:"default:false"`
 	FollowersCount int            `json:"followers" gorm:"default:0"`
 	FollowingCount int            `json:"following" gorm:"default:0"`
-	PostsCount     int            `json:"posts_count" gorm:"default:0"`
-	CreatedAt      time.Time      `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt      time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
+	PostsCount     int            `json:"postsCount" gorm:"default:0"`
+	CreatedAt      time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt      time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 	DeletedAt      gorm.DeletedAt `json:"-" gorm:"index"`
-	IsFollowed     *bool          `json:"is_followed,omitempty" gorm:"-"`
+	IsFollowed     *bool          `json:"isFollowed,omitempty" gorm:"-"`
 
 	// Relations
 	Posts    []Post    `json:"-" gorm:"foreignKey:UserID"`

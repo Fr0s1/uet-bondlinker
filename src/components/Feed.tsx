@@ -1,6 +1,6 @@
 
 import Post from './Post';
-import { usePosts, useFeed } from '@/hooks/use-posts';
+import { usePosts, useFeed, type Post as PostType } from '@/hooks/use-posts';
 import { Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -11,7 +11,7 @@ interface FeedProps {
 
 const Feed = ({ type = 'public', userId }: FeedProps) => {
 
-  let posts: any[];
+  let posts: PostType[];
   let isLoading: boolean;
   let page: number;
   let setPage: any;
@@ -57,32 +57,7 @@ const Feed = ({ type = 'public', userId }: FeedProps) => {
       {posts.map((post) => (
         <Post
           key={post.id}
-          id={post.id}
-          author={{
-            id: post.user_id,
-            name: post.author?.name || "Unknown User",
-            username: post.author?.username || "unknown",
-            avatar: post.author?.avatar || "/user-avatar.png",
-          }}
-          content={post.content}
-          image={post.image}
-          createdAt={post.created_at}
-          likes={post.likes}
-          comments={post.comments}
-          shares={post.shares}
-          isLiked={post.is_liked}
-          sharedPost={post.shared_post ? {
-            id: post.shared_post.id,
-            author: {
-              id: post.shared_post.user_id,
-              name: post.shared_post.author?.name || "Unknown User",
-              username: post.shared_post.author?.username || "unknown",
-              avatar: post.shared_post.author?.avatar || "/user-avatar.png",
-            },
-            content: post.shared_post.content,
-            image: post.shared_post.image,
-            createdAt: post.shared_post.created_at,
-          } : undefined}
+          post={post}
         />
       ))}
 

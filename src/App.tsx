@@ -48,6 +48,7 @@ function App() {
                 <Route path="/search" element={<Search />} />
                 <Route path="/trending" element={<Trending />} />
                 <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/c/:conversationId" element={<Messages />} />
                 <Route path="/change-password" element={<ChangePassword />} />
               </Route>
 

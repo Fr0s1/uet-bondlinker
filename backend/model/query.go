@@ -14,14 +14,14 @@ type UserFilter struct {
 
 // PostFilter represents post filtering parameters
 type PostFilter struct {
-	UserID string `form:"user_id"`
+	UserID string `form:"userId"`
 	Query  string `form:"q"`
 	Pagination
 }
 
 // CommentFilter represents comment filtering parameters
 type CommentFilter struct {
-	PostID string `form:"post_id" binding:"required,uuid"`
+	PostID string `form:"postId" binding:"required,uuid"`
 	Pagination
 }
 

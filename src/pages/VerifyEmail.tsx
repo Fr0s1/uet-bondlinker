@@ -36,7 +36,7 @@ const VerifyEmail: React.FC = () => {
   }, [location.search]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
+    <div className="flex justify-center items-center  bg-gray-50 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Email Verification</CardTitle>

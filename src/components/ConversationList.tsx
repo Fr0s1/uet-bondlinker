@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversations } from '@/hooks/use-messages';
 
 interface Conversation {
   id: string;
@@ -30,13 +31,7 @@ const ConversationList = ({ selectedConversationId, onSelectConversation }: Conv
   const { user } = useAuth();
 
   // Fetch conversations with proper typing
-  const { data: conversations, isLoading } = useQuery<Conversation[]>({
-    queryKey: ['conversations'],
-    queryFn: async () => {
-      return api.get<Conversation[]>('/conversations');
-    },
-    enabled: !!user
-  });
+  const { conversations, isLoading } = useConversations(user)
 
   if (isLoading) {
     return (

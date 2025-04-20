@@ -5,14 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface Notification {
   id: string;
-  user_id: string;
-  sender_id?: string;
+  userId: string;
+  senderId?: string;
   type: 'follow' | 'like' | 'comment' | 'share' | 'message' | 'system_alert';
   message: string;
-  related_entity_id?: string;
-  entity_type?: string;
-  is_read: boolean;
-  created_at: string;
+  relatedEntityId?: string;
+  entityType?: string;
+  isRead: boolean;
+  createdAt: string;
   sender?: {
     id: string;
     name: string;
@@ -24,7 +24,7 @@ export interface Notification {
 export interface NotificationFilter {
   limit?: number;
   offset?: number;
-  is_read?: boolean;
+  isRead?: boolean;
 }
 
 export const useNotifications = (filter: NotificationFilter = { limit: 20, offset: 0 }) => {
@@ -35,8 +35,8 @@ export const useNotifications = (filter: NotificationFilter = { limit: 20, offse
     const params = new URLSearchParams();
     if (filter.limit) params.append('limit', filter.limit.toString());
     if (filter.offset) params.append('offset', filter.offset.toString());
-    if (filter.is_read !== undefined) params.append('is_read', filter.is_read.toString());
-    
+    if (filter.isRead !== undefined) params.append('isRead', filter.isRead.toString());
+
     return api.get<Notification[]>(`/notifications?${params.toString()}`);
   };
 

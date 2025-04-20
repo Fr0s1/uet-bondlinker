@@ -9,13 +9,14 @@ import (
 
 // Message represents a chat message between users
 type Message struct {
-	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	Content     string    `json:"content" gorm:"type:text;not null"`
-	SenderID    uuid.UUID `json:"senderId" gorm:"type:uuid;not null"`
-	RecipientID uuid.UUID `json:"recipientId" gorm:"type:uuid;not null"`
-	IsRead      bool      `json:"isRead" gorm:"default:false"`
-	CreatedAt   time.Time `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	ID             uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	Content        string    `json:"content" gorm:"type:text;not null"`
+	ConversationID uuid.UUID `json:"conversationId" gorm:"type:uuid;not null"`
+	SenderID       uuid.UUID `json:"senderId" gorm:"type:uuid;not null"`
+	RecipientID    uuid.UUID `json:"recipientId" gorm:"type:uuid;not null"`
+	IsRead         bool      `json:"isRead" gorm:"default:false"`
+	CreatedAt      time.Time `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
 }
 
 // Conversation represents a chat conversation between two users
@@ -44,7 +45,7 @@ type MessageBrief struct {
 // MessageFilter defines filters for querying messages
 type MessageFilter struct {
 	Pagination
-	ConversationID uuid.UUID `form:"conversation_id"`
+	ConversationID uuid.UUID `form:"conversationId"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID

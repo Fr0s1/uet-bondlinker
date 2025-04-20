@@ -90,13 +90,13 @@ const CommentSection = ({ postId }: { postId: string }) => {
                 <div className="bg-white p-3 rounded-lg">
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium text-sm">{comment.author?.name || "Unknown User"}</h4>
-                    <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+                    <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
                   </div>
                   <p className="text-sm mt-1 text-left">{comment.content}</p>
                 </div>
 
                 <div className="flex items-center space-x-4 mt-1 ml-1">
-                  {user?.id === comment.user_id && (
+                  {user?.id === comment.userId && (
                     <button
                       className="text-xs text-gray-500 hover:text-red-500"
                       onClick={() => deleteComment.mutate(comment.id)}

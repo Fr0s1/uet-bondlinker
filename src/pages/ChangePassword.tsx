@@ -17,8 +17,8 @@ const ChangePasswordPage = () => {
   }, [isAuthenticated, isLoading, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className=" bg-gray-50">
+      <div className="container max-w-6xl mx-auto p-4">
         <Button
           variant="ghost"
           className="mb-6 flex items-center"

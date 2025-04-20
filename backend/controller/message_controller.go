@@ -267,10 +267,11 @@ func (mc *MessageController) CreateMessage(c *gin.Context) {
 
 	// Create message
 	message := model.Message{
-		SenderID:    userID,
-		RecipientID: recipientID,
-		Content:     input.Content,
-		IsRead:      false,
+		ConversationID: convID,
+		SenderID:       userID,
+		RecipientID:    recipientID,
+		Content:        input.Content,
+		IsRead:         false,
 	}
 
 	if err := mc.repo.Message.CreateMessage(&message); err != nil {

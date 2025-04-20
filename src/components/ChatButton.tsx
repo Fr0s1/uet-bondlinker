@@ -19,11 +19,11 @@ const ChatButton = ({ username, userId }: ChatButtonProps) => {
     try {
       const conversation = await createDirectMessage.mutateAsync({
         username,
-        content: 'Hello', // No initial message
+        content: '', // No initial message
       });
 
       if (conversation && conversation.id) {
-        navigate(`/messages`);
+        navigate(`/messages/c/${conversation.id}`);
       }
     } catch (error) {
       toast({
