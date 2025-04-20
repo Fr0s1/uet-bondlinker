@@ -211,3 +211,32 @@ func (r *UserRepo) GetSuggestedUsers(userID uuid.UUID, filter model.Pagination) 
 
 	return users, err
 }
+
+func (r *UserRepo) FillFollowingInfo(currentUserID *uuid.UUID, listUsers []model.User) ([]model.User, error) {
+	if len(listUsers) == 0 || currentUserID == nil {
+		return listUsers, nil
+	}
+
+	userIds := make([]uuid.UUID, len(listUsers))
+	for i := range listUsers {
+		userIds[i] = listUsers[i].ID
+	}
+
+	var followeds []model.Follow
+	err := r.db.Model(&model.Follow{}).Where("follower_id = ? AND following_id IN ?", *currentUserID, userIds).Scan(&followeds).Error
+	if err != nil {
+		return nil, err
+	}
+
+	followedMap := make(map[uuid.UUID]bool)
+	for _, followed := range followeds {
+		followedMap[followed.FollowingID] = true
+	}
+
+	for i := range listUsers {
+		isFollowed := followedMap[listUsers[i].ID]
+		listUsers[i].IsFollowed = &isFollowed
+	}
+
+	return listUsers, nil
+}

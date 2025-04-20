@@ -42,12 +42,9 @@ func (sc *SearchController) SearchUsers(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check follow status for each user
-	if currentUserID != nil {
-		for i := range users {
-			isFollowed, _ := sc.repo.User.IsFollowing(*currentUserID, users[i].ID)
-			users[i].IsFollowed = &isFollowed
-		}
+	if users, err = sc.repo.User.FillFollowingInfo(currentUserID, users); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "Users found", users)
@@ -70,11 +67,9 @@ func (sc *SearchController) SearchPosts(c *gin.Context) {
 	}
 
 	// If user is authenticated, check if posts are liked
-	if currentUserID != nil {
-		for i := range posts {
-			isLiked, _ := sc.repo.Post.IsLiked(*currentUserID, posts[i].ID)
-			posts[i].IsLiked = &isLiked
-		}
+	if posts, err = sc.repo.Post.FillLikeInfo(currentUserID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "Posts found", posts)
@@ -96,12 +91,9 @@ func (sc *SearchController) Search(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check follow status for each user
-	if currentUserID != nil {
-		for i := range users {
-			isFollowed, _ := sc.repo.User.IsFollowing(*currentUserID, users[i].ID)
-			users[i].IsFollowed = &isFollowed
-		}
+	if users, err = sc.repo.User.FillFollowingInfo(currentUserID, users); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch following info")
+		return
 	}
 
 	// Search posts
@@ -111,12 +103,9 @@ func (sc *SearchController) Search(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check if posts are liked
-	if currentUserID != nil {
-		for i := range posts {
-			isLiked, _ := sc.repo.Post.IsLiked(*currentUserID, posts[i].ID)
-			posts[i].IsLiked = &isLiked
-		}
+	if posts, err = sc.repo.Post.FillLikeInfo(currentUserID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	// Return combined results

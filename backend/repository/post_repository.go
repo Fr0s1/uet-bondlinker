@@ -232,28 +232,34 @@ func (r *PostRepo) IsLiked(userID, postID uuid.UUID) (bool, error) {
 	return count > 0, err
 }
 
-// BatchIsLiked checks if multiple posts are liked by a user
-func (r *PostRepo) BatchIsLiked(userID uuid.UUID, postIDs []uuid.UUID) (map[uuid.UUID]bool, error) {
-	var likes []model.Like
-	result := make(map[uuid.UUID]bool)
-
-	// Initialize all posts as not liked
-	for _, id := range postIDs {
-		result[id] = false
+func (r *PostRepo) FillLikeInfo(userID *uuid.UUID, posts []model.Post) ([]model.Post, error) {
+	if userID == nil || len(posts) == 0 {
+		return posts, nil
 	}
 
-	// Find all likes from user for these posts
+	var likes []model.Like
+
+	postIDs := make([]uuid.UUID, len(posts))
+	for i := range posts {
+		postIDs[i] = posts[i].ID
+	}
+
 	err := r.db.Where("user_id = ? AND post_id IN ?", userID, postIDs).Find(&likes).Error
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
-	// Mark liked posts
+	likedMap := make(map[uuid.UUID]bool)
 	for _, like := range likes {
-		result[like.PostID] = true
+		likedMap[like.PostID] = true
 	}
 
-	return result, nil
+	for i := range posts {
+		isLiked := likedMap[posts[i].ID]
+		posts[i].IsLiked = &isLiked
+	}
+
+	return posts, nil
 }
 
 // CountLikes returns the number of likes for a post

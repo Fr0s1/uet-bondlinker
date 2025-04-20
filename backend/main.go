@@ -21,6 +21,10 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	if cfg.Server.Env != "production" {
+		db = db.Debug()
+	}
+
 	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)

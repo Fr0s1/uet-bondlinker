@@ -50,12 +50,9 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check if posts are liked
-	if currentUserID != nil {
-		for i := range posts {
-			isLiked, _ := pc.repo.Post.IsLiked(*currentUserID, posts[i].ID)
-			posts[i].IsLiked = &isLiked
-		}
+	if posts, err = pc.repo.Post.FillLikeInfo(currentUserID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
@@ -256,10 +253,9 @@ func (pc *PostController) GetFeed(c *gin.Context) {
 		return
 	}
 
-	// Check if posts are liked by the current user
-	for i := range posts {
-		isLiked, _ := pc.repo.Post.IsLiked(userID, posts[i].ID)
-		posts[i].IsLiked = &isLiked
+	if posts, err = pc.repo.Post.FillLikeInfo(&userID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
@@ -288,12 +284,9 @@ func (pc *PostController) GetTrending(c *gin.Context) {
 		return
 	}
 
-	// If user is authenticated, check if posts are liked
-	if currentUserID != nil {
-		for i := range posts {
-			isLiked, _ := pc.repo.Post.IsLiked(*currentUserID, posts[i].ID)
-			posts[i].IsLiked = &isLiked
-		}
+	if posts, err = pc.repo.Post.FillLikeInfo(currentUserID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
@@ -322,10 +315,9 @@ func (pc *PostController) GetSuggestedPosts(c *gin.Context) {
 		return
 	}
 
-	// Check if posts are liked by the current user
-	for i := range posts {
-		isLiked, _ := pc.repo.Post.IsLiked(userID, posts[i].ID)
-		posts[i].IsLiked = &isLiked
+	if posts, err = pc.repo.Post.FillLikeInfo(&userID, posts); err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch like info")
+		return
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", posts)
