@@ -27,32 +27,28 @@ const Messages = () => {
   }
 
   return (
-    <div className="bg-gray-50">
-      <div className="container py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left Sidebar - Conversation List */}
-          <aside className="lg:col-span-3">
-            <ConversationList
-              selectedConversationId={conversationId}
-              onSelectConversation={onSelectConversation}
-            />
-          </aside>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 py-4">
+      {/* Left Sidebar - Conversation List */}
+      <aside className="lg:col-span-3">
+        <ConversationList
+          selectedConversationId={conversationId}
+          onSelectConversation={onSelectConversation}
+        />
+      </aside>
 
-          {/* Main Content - Chat Window */}
-          <main className="lg:col-span-9">
-            {conversationId ? (
-              <ChatWindow conversationId={conversationId} />
-            ) : (
-              <div className="bg-white rounded-xl p-8 text-center h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-2">Select a conversation</h2>
-                  <p className="text-gray-500">Choose a conversation from the list to start chatting</p>
-                </div>
-              </div>
-            )}
-          </main>
-        </div>
-      </div>
+      {/* Main Content - Chat Window */}
+      <main className="lg:col-span-9">
+        {conversationId ? (
+          <ChatWindow conversationId={conversationId} />
+        ) : (
+          <div className="bg-white rounded-xl p-8 text-center h-[calc(100vh-120px)] flex items-center justify-center card-shadow">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">Select a conversation</h2>
+              <p className="text-gray-500">Choose a conversation from the list to start chatting</p>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

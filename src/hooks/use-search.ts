@@ -11,14 +11,14 @@ export interface SearchResults {
   posts: Post[];
 }
 
-export const useSearch = (query: string, limit = 10) => {
+export const useSearch = ({ query, limit = 10, enabled }: { query: string, enabled: boolean, limit?: number }) => {
   const [page, setPage] = useState(1);
   const debouncedQuery = useDebounce(query, 300);
 
   const { data, isLoading, error } = useQuery<SearchResults>({
     queryKey: ["search", debouncedQuery, page, limit],
     queryFn: () => api.get<SearchResults>(`/search?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
-    enabled: debouncedQuery.length > 0,
+    enabled: debouncedQuery.length > 0 && enabled,
     staleTime: 60000, // 1 minute
     placeholderData: { users: [], posts: [] }, // Use placeholderData instead of keepPreviousData
   });
@@ -32,14 +32,14 @@ export const useSearch = (query: string, limit = 10) => {
   };
 };
 
-export const useSearchUsers = (query: string, limit = 10) => {
+export const useSearchUsers = ({ query, limit = 10, enabled }: { query: string, enabled: boolean, limit?: number }) => {
   const [page, setPage] = useState(1);
   const debouncedQuery = useDebounce(query, 300);
 
   const { data, isLoading, error } = useQuery<User[]>({
     queryKey: ["search", "users", debouncedQuery, page, limit],
     queryFn: () => api.get<User[]>(`/search/users?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
-    enabled: debouncedQuery.length > 0,
+    enabled: debouncedQuery.length > 0 && enabled,
     staleTime: 60000,
     placeholderData: [], // Use placeholderData instead of keepPreviousData
   });
@@ -53,14 +53,14 @@ export const useSearchUsers = (query: string, limit = 10) => {
   };
 };
 
-export const useSearchPosts = (query: string, limit = 10) => {
+export const useSearchPosts = ({ query, limit = 10, enabled }: { query: string, enabled: boolean, limit?: number }) => {
   const [page, setPage] = useState(1);
   const debouncedQuery = useDebounce(query, 300);
 
   const { data, isLoading, error } = useQuery<Post[]>({
     queryKey: ["search", "posts", debouncedQuery, page, limit],
     queryFn: () => api.get<Post[]>(`/search/posts?q=${encodeURIComponent(debouncedQuery)}&limit=${limit}&offset=${(page - 1) * limit}`),
-    enabled: debouncedQuery.length > 0,
+    enabled: debouncedQuery.length > 0 && enabled,
     staleTime: 60000,
     placeholderData: [], // Use placeholderData instead of keepPreviousData
   });
