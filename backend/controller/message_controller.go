@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"encoding/json"
 	"net/http"
 	"socialnet/config"
 	"socialnet/middleware"
 	"socialnet/model"
 	"socialnet/repository"
 	"socialnet/util"
+	"socialnet/websocket"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,15 +16,17 @@ import (
 
 // MessageController handles message-related requests
 type MessageController struct {
-	repo *repository.Repository
-	cfg  *config.Config
+	repo  *repository.Repository
+	wsHub *websocket.Hub
+	cfg   *config.Config
 }
 
 // NewMessageController creates a new MessageController
-func NewMessageController(repo *repository.Repository, cfg *config.Config) *MessageController {
+func NewMessageController(repo *repository.Repository, wsHub *websocket.Hub, cfg *config.Config) *MessageController {
 	return &MessageController{
-		repo: repo,
-		cfg:  cfg,
+		repo:  repo,
+		wsHub: wsHub,
+		cfg:   cfg,
 	}
 }
 
@@ -278,6 +282,10 @@ func (mc *MessageController) CreateMessage(c *gin.Context) {
 		util.RespondWithError(c, http.StatusInternalServerError, "Failed to send message")
 		return
 	}
+
+	msgBytes, _ := json.Marshal(model.NewWsMessage(recipientID, model.WsMessageTypeMessage, message))
+
+	mc.wsHub.SendToUser(recipientID, msgBytes)
 
 	util.RespondWithSuccess(c, http.StatusCreated, "success", message)
 }

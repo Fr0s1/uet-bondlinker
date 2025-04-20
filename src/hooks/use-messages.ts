@@ -112,6 +112,11 @@ export const useMessages = (conversationId: string) => {
     error,
     page,
     setPage,
+    appendMessage(message: Message) {
+      queryClient.setQueryData(['messages', conversationId, 1], (oldMessages: Message[] | undefined) => {
+        return [...(oldMessages || []), message]
+      })
+    }
   };
 };
 

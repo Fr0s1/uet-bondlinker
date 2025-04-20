@@ -1,31 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api-client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send } from 'lucide-react';
 import MessageBubble from './MessageBubble';
-import { useConversation, useMessages } from '@/hooks/use-messages';
-
-interface Message {
-  id: string;
-  content: string;
-  createdAt: string;
-  senderId: string;
-  recipientId: string;
-}
-
-interface Conversation {
-  id: string;
-  recipient: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string | null;
-  };
-}
+import { Message, useConversation, useMessages } from '@/hooks/use-messages';
+import { useWebSocket } from '@/hooks/use-websocket';
+import { useDebounce } from '@/hooks/use-debounce';
+import { da } from 'date-fns/locale';
 
 interface ChatWindowProps {
   conversationId: string;
@@ -34,13 +17,73 @@ interface ChatWindowProps {
 const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isTypingTimeoutID, setIsTypingTimeoutID] = useState(0);
+  const [recipientTyping, setRecipientTyping] = useState(false);
+  const [recipientTypingTimeoutID, setRecipientTypingTimeoutID] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { sendMessage: sendWsMessage, ws } = useWebSocket();
+  const debouncedTyping = useDebounce(isTyping, 1000);
 
   // Fetch conversation with proper typing
   const { data: conversation, isLoading: isConversationLoading, sendMessage, markAsRead } = useConversation(conversationId)
 
   // Fetch messages with proper typing
-  const { messages, isLoading: isMessagesLoading } = useMessages(conversationId)
+  const { messages, isLoading: isMessagesLoading, appendMessage } = useMessages(conversationId)
+
+  useEffect(() => {
+    if (!ws || !conversation) return;
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(data);
+
+      if (data.payload?.conversationId !== conversationId) {
+        return
+      }
+
+      if (data.type === 'typing') {
+        const typingEvent = data.payload;
+        if (typingEvent.userId !== user?.id) {
+          setRecipientTyping(typingEvent.isTyping);
+          clearTimeout(recipientTypingTimeoutID)
+          setRecipientTypingTimeoutID(window.setTimeout(() => {
+            setRecipientTyping(false)
+          }, 5000))
+        }
+        return
+      }
+
+      if (data.type === 'message') {
+        setRecipientTyping(false);
+        clearTimeout(recipientTypingTimeoutID)
+        appendMessage(data.payload as Message)
+      }
+    };
+  }, [ws, conversation, user]);
+
+  // Send typing indicator
+  useEffect(() => {
+    if (!conversation || !debouncedTyping || !newMessage.trim()) return;
+
+    sendWsMessage(conversation.recipient.id, 'typing', {
+      conversationId,
+      isTyping: debouncedTyping,
+      userId: user?.id,
+    });
+  }, [debouncedTyping, conversation]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    if (!e.target.value) {
+      return
+    }
+    setIsTyping(true);
+    clearTimeout(isTypingTimeoutID);
+    setIsTypingTimeoutID(window.setTimeout(() => {
+      setIsTyping(false)
+    }, 5000))
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +92,8 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
 
     sendMessage.mutate(newMessage, {
       onSuccess: () => {
+        setIsTyping(false);
+        clearTimeout(isTypingTimeoutID);
         scrollToBottom();
       }
     });
@@ -61,7 +106,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, recipientTyping]);
 
   useEffect(() => {
     if (conversation) {
@@ -119,7 +164,13 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
                 isCurrentUser={message.senderId === user?.id}
               />
             ))}
-            <div ref={messagesEndRef} />
+            {recipientTyping && (
+              <div className="flex items-center text-gray-500 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {conversation?.recipient.name} is typing...
+              </div>
+            )}
+            <div className="!mt-0" ref={messagesEndRef} />
           </div>
         ) : (
           <div className="h-full flex items-center justify-center">
@@ -134,7 +185,7 @@ const ChatWindow = ({ conversationId }: ChatWindowProps) => {
           type="text"
           placeholder="Type a message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleInputChange}
           className="flex-grow"
         />
         <Button

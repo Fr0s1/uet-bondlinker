@@ -63,3 +63,24 @@ func (c *Conversation) BeforeCreate(tx *gorm.DB) error {
 	}
 	return nil
 }
+
+type WsMessageType string
+
+const (
+	WsMessageTypeMessage WsMessageType = "message"
+	WsMessageTypeTyping  WsMessageType = "typing"
+)
+
+type WsMessage[T any] struct {
+	ToUserId uuid.UUID     `json:"toUserId"`
+	Type     WsMessageType `json:"type"`
+	Payload  T             `json:"payload"`
+}
+
+func NewWsMessage[T any](toUserId uuid.UUID, messageType WsMessageType, payload T) WsMessage[T] {
+	return WsMessage[T]{
+		ToUserId: toUserId,
+		Type:     messageType,
+		Payload:  payload,
+	}
+}
