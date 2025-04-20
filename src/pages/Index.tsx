@@ -92,6 +92,7 @@ const Index = () => {
             <UserProfile
               user={user}
               isCurrentUser={true}
+              size='small'
             />
           </div>
         )}

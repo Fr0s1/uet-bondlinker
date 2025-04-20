@@ -24,9 +24,10 @@ import { useFileUpload } from '@/hooks/use-upload';
 interface UserProfileProps {
   user: User;
   isCurrentUser?: boolean;
+  size: 'small' | 'large'
 }
 
-const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
+const UserProfile = ({ user, isCurrentUser = false, size }: UserProfileProps) => {
   const [isFollowing, setIsFollowing] = React.useState(user.isFollowed || false);
   const [followerCount, setFollowerCount] = React.useState(user.followers);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -135,7 +136,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
   return (
     <div className="bg-white rounded-xl overflow-hidden card-shadow animate-fade-in">
       <div className="relative">
-        <div className="h-64 bg-gradient-to-r from-social-blue to-social-darkblue" style={{
+        <div className={`${size == 'small' ? 'h-32' : 'h-64'} bg-gradient-to-r from-social-blue to-social-darkblue`} style={{
           backgroundImage: user.cover ? `url(${user.cover})` : null,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',

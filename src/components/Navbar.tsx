@@ -79,7 +79,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-screen-2xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">

@@ -45,6 +45,7 @@ const Profile = () => {
         <UserProfile
           user={profileUser}
           isCurrentUser={isCurrentUser}
+          size='large'
         />
 
         <div className="mt-6">
