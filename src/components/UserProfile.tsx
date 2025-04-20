@@ -19,6 +19,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useFollowUser, useUnfollowUser } from '@/hooks/use-users';
 import ChatButton from './ChatButton';
 import { User } from '@/contexts/AuthContext';
+import { useFileUpload } from '@/hooks/use-upload';
 
 interface UserProfileProps {
   user: User;
@@ -55,22 +56,7 @@ const UserProfile = ({ user, isCurrentUser = false }: UserProfileProps) => {
     }
   };
 
-  // File upload mutation for S3
-  const fileUploadMutation = useMutation({
-    mutationFn: (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      return api.post<{ url: string }>("/uploads", formData, true);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    }
-  });
+  const fileUploadMutation = useFileUpload()
 
   const updateProfileMutation = useMutation({
     mutationFn: (data: { avatar?: string, cover?: string }) =>

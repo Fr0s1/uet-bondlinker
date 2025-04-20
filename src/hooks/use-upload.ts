@@ -13,20 +13,20 @@ export const useFileUpload = () => {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       try {
         toast({
           title: "Uploading...",
           description: "Your file is being uploaded to the server.",
         });
-        
+
         const response = await api.post<UploadResponse>('/uploads', formData, true);
-        
+
         toast({
           title: "Upload complete",
           description: "Your file has been uploaded successfully.",
         });
-        
+
         return response;
       } catch (error) {
         toast({
