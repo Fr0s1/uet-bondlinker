@@ -5,72 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send } from 'lucide-react';
 import MessageBubble from './MessageBubble';
-import { Message, useConversation, useMessages } from '@/hooks/use-messages';
-import { useWebSocket } from '@/hooks/use-websocket';
+import { useConversation, useMessages } from '@/hooks/use-messages';
 import { useDebounce } from '@/hooks/use-debounce';
-import { da } from 'date-fns/locale';
 
 interface ChatWindowProps {
   conversationId: string;
+  recipientTyping: boolean;
+  onIsTypingChange?: (isTyping: boolean) => void
 }
 
-const ChatWindow = ({ conversationId }: ChatWindowProps) => {
+const ChatWindow = ({ conversationId, recipientTyping, onIsTypingChange }: ChatWindowProps) => {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isTypingTimeoutID, setIsTypingTimeoutID] = useState(0);
-  const [recipientTyping, setRecipientTyping] = useState(false);
-  const [recipientTypingTimeoutID, setRecipientTypingTimeoutID] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { sendMessage: sendWsMessage, ws } = useWebSocket();
   const debouncedTyping = useDebounce(isTyping, 1000);
 
   // Fetch conversation with proper typing
   const { data: conversation, isLoading: isConversationLoading, sendMessage, markAsRead } = useConversation(conversationId)
 
   // Fetch messages with proper typing
-  const { messages, isLoading: isMessagesLoading, appendMessage } = useMessages(conversationId)
-
-  useEffect(() => {
-    if (!ws || !conversation) return;
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log(data);
-
-      if (data.payload?.conversationId !== conversationId) {
-        return
-      }
-
-      if (data.type === 'typing') {
-        const typingEvent = data.payload;
-        if (typingEvent.userId !== user?.id) {
-          setRecipientTyping(typingEvent.isTyping);
-          clearTimeout(recipientTypingTimeoutID)
-          setRecipientTypingTimeoutID(window.setTimeout(() => {
-            setRecipientTyping(false)
-          }, 5000))
-        }
-        return
-      }
-
-      if (data.type === 'message') {
-        setRecipientTyping(false);
-        clearTimeout(recipientTypingTimeoutID)
-        appendMessage(data.payload as Message)
-      }
-    };
-  }, [ws, conversation, user]);
+  const { messages, isLoading: isMessagesLoading } = useMessages(conversationId)
 
   // Send typing indicator
   useEffect(() => {
     if (!conversation || !debouncedTyping || !newMessage.trim()) return;
 
-    sendWsMessage(conversation.recipient.id, 'typing', {
-      conversationId,
-      isTyping: debouncedTyping,
-      userId: user?.id,
-    });
+    onIsTypingChange?.(debouncedTyping)
   }, [debouncedTyping, conversation]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -21,11 +21,15 @@ type Message struct {
 
 // Conversation represents a chat conversation between two users
 type Conversation struct {
-	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	UserID1   uuid.UUID `json:"userId1" gorm:"type:uuid;not null"`
-	UserID2   uuid.UUID `json:"userId2" gorm:"type:uuid;not null"`
-	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	ID            uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	UserID1       uuid.UUID  `json:"userId1" gorm:"type:uuid;not null"`
+	UserID2       uuid.UUID  `json:"userId2" gorm:"type:uuid;not null"`
+	LastMessageID *uuid.UUID `json:"lastMessageId" gorm:"type:uuid"`
+	CreatedAt     time.Time  `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt     time.Time  `json:"updatedAt" gorm:"autoUpdateTime"`
+
+	LastMessage *Message `json:"lastMessage,omitempty" gorm:"foreignKey:LastMessageID"`
+	Recipient   User     `json:"recipient" gorm:"-"`
 }
 
 // ConversationResponse is the API response for a conversation
