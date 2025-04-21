@@ -7,6 +7,7 @@ import { Loader2, Send } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import { useConversation, useMessages } from '@/hooks/use-messages';
 import { useDebounce } from '@/hooks/use-debounce';
+import { differenceInSeconds } from 'date-fns';
 
 interface ChatWindowProps {
   conversationId: string;
@@ -118,12 +119,15 @@ const ChatWindow = ({ conversationId, recipientTyping, onIsTypingChange }: ChatW
       {/* Messages area */}
       <div className="flex-grow overflow-y-auto p-4 bg-gray-50">
         {messages && messages.length > 0 ? (
-          <div className="space-y-3">
-            {messages.map((message) => (
+          <div className="space-y-2">
+            {messages.map((message, index) => (
               <MessageBubble
                 key={message.id}
                 message={message}
                 isCurrentUser={message.senderId === user?.id}
+                showTimeSeparator={index > 0 && differenceInSeconds(message.createdAt, messages[index - 1].createdAt) > 600}
+                continiousTop={index > 0 && messages[index - 1].recipientId == message.recipientId && differenceInSeconds(message.createdAt, messages[index - 1].createdAt) < 300}
+                continiousBottom={index < messages.length - 1 && messages[index + 1].recipientId == message.recipientId && differenceInSeconds(messages[index + 1].createdAt, message.createdAt) < 300}
               />
             ))}
             {recipientTyping && (
