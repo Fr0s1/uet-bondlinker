@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/use-toast";
@@ -73,7 +72,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const data = await api.post<AuthResponse>("/auth/login", { email, password });
+      const data = await api.post<AuthResponse>("/auth/login", { 
+        email, 
+        password,
+        fcmToken: localStorage.getItem('fcmToken'),
+        device: navigator.userAgent
+      });
       localStorage.setItem("token", data.token);
       queryClient.setQueryData(['auth'], () => {
         return data.user
@@ -86,6 +90,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   }
+
+  const logout = async () => {
+    const fcmToken = localStorage.getItem('fcmToken');
+    if (fcmToken) {
+      try {
+        await api.post('/auth/logout', { fcmToken });
+      } catch (error) {
+        console.error('Error removing FCM token:', error);
+      }
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("fcmToken");
+    queryClient.setQueryData(['auth'], () => {
+      return null
+    });
+    toast({
+      title: "Logged out",
+      description: "You've been successfully logged out.",
+    });
+  };
 
   const register = async (data: RegisterData) => {
     setIsLoading(true);
@@ -102,17 +126,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    queryClient.setQueryData(['auth'], () => {
-      return null
-    });
-    toast({
-      title: "Logged out",
-      description: "You've been successfully logged out.",
-    });
   };
 
   const updateUser = async (data: UpdateUserData) => {

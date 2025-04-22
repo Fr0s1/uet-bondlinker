@@ -32,20 +32,20 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
   const getNotificationLink = () => {
     switch (notification.type) {
       case 'follow':
-        return notification.sender_id ? `/profile/${notification.sender_id}` : '#';
+        return notification.senderId ? `/profile/${notification.senderId}` : '#';
       case 'like':
       case 'comment':
       case 'share':
-        return notification.related_entity_id ? `/posts/${notification.related_entity_id}` : '#';
+        return notification.relatedEntityId ? `/posts/${notification.relatedEntityId}` : '#';
       case 'message':
-        return notification.related_entity_id ? `/messages?conversation=${notification.related_entity_id}` : '/messages';
+        return notification.relatedEntityId ? `/messages?conversation=${notification.relatedEntityId}` : '/messages';
       default:
         return '#';
     }
   };
 
   const handleClick = () => {
-    if (!notification.is_read) {
+    if (!notification.isRead) {
       onRead(notification.id);
     }
   };
@@ -53,7 +53,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
   return (
     <Link
       to={getNotificationLink()}
-      className={`block p-4 border-b hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50' : ''}`}
+      className={`block p-4 border-b hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-blue-50' : ''}`}
       onClick={handleClick}
     >
       <div className="flex items-start space-x-3">
@@ -72,10 +72,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-900">{notification.message}</p>
           <p className="text-xs text-gray-500 mt-1">
-            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
           </p>
         </div>
-        {!notification.is_read && (
+        {!notification.isRead && (
           <div className="flex-shrink-0">
             <div className="h-2 w-2 rounded-full bg-blue-500"></div>
           </div>
