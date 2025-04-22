@@ -98,38 +98,90 @@ func (ac *AuthController) Register(c *gin.Context) {
 	})
 }
 
+// LoginInput represents login request data
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	FCMToken string `json:"fcmToken"`
+	Device   string `json:"device"`
+}
+
 // Login authenticates a user and returns a JWT token
 func (ac *AuthController) Login(c *gin.Context) {
-	var input model.UserLogin
-
-	if !middleware.BindJSON(c, &input) {
+	var input LoginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid input")
 		return
 	}
 
-	// Get user from database
+	// Verify credentials and get user
 	user, err := ac.repo.User.FindByEmail(input.Email)
 	if err != nil {
-		util.RespondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		util.RespondWithError(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
-	// Verify password
 	if !util.CheckPasswordHash(input.Password, user.Password) {
-		util.RespondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		util.RespondWithError(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
 	// Generate JWT token
-	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
+	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret)
 	if err != nil {
-		util.RespondWithError(c, http.StatusInternalServerError, "Failed to generate token")
+		util.RespondWithError(c, http.StatusInternalServerError, "Error generating token")
 		return
+	}
+
+	// Save FCM token if provided
+	if input.FCMToken != "" && input.Device != "" {
+		err = ac.repo.User.SaveFCMToken(user.ID, input.FCMToken, input.Device)
+		if err != nil {
+			util.RespondWithError(c, http.StatusInternalServerError, "Error saving FCM token")
+			return
+		}
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "Login successful", model.AuthResponse{
 		Token: token,
 		User:  *user,
 	})
+}
+
+// LogoutInput represents logout request data
+type LogoutInput struct {
+	FCMToken string `json:"fcmToken"`
+}
+
+// Logout removes the FCM token
+func (ac *AuthController) Logout(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	var input LogoutInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		util.RespondWithError(c, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
+	if input.FCMToken != "" {
+		uuid, err := uuid.Parse(userID)
+		if err != nil {
+			util.RespondWithError(c, http.StatusBadRequest, "Invalid user ID")
+			return
+		}
+
+		err = ac.repo.User.RemoveFCMToken(uuid, input.FCMToken)
+		if err != nil {
+			util.RespondWithError(c, http.StatusInternalServerError, "Error removing FCM token")
+			return
+		}
+	}
+
+	util.RespondWithSuccess(c, http.StatusOK, "Logout successful", nil)
 }
 
 // ChangePassword changes a user's password

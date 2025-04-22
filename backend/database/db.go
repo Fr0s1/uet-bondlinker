@@ -33,7 +33,8 @@ func RunMigrations(db *gorm.DB) error {
 		&model.Comment{},
 		&model.Message{},
 		&model.Conversation{},
-		&model.Notification{}, // Add notification model
+		&model.Notification{},
+		&model.FCMToken{},
 	)
 }
 

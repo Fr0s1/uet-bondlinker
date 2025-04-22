@@ -3,6 +3,8 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"socialnet/config"
 	"socialnet/middleware"
@@ -261,9 +263,19 @@ func (mc *MessageController) CreateMessage(c *gin.Context) {
 		return
 	}
 
-	msgBytes, _ := json.Marshal(model.NewWsMessage(recipientID, model.WsMessageTypeMessage, message))
-
-	mc.wsHub.SendToUser(recipientID, msgBytes)
+	// After successfully creating the message, send FCM notification
+	tokens, err := mc.repo.User.GetUserFCMTokens(recipientID)
+	if err != nil {
+		log.Printf("Error getting FCM tokens: %v", err)
+	} else if len(tokens) > 0 {
+		// Send notification to all user's devices
+		notification := model.WsMessage{
+			Type: model.WsMessageTypeMessage,
+			Data: message,
+		}
+		notificationBytes, _ := json.Marshal(notification)
+		mc.wsHub.SendToUser(recipientID, notificationBytes)
+	}
 
 	util.RespondWithSuccess(c, http.StatusCreated, "success", message)
 }

@@ -77,6 +77,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 
 			// Protected auth routes
 			auth.Use(middleware.AuthMiddleware(cfg))
+			auth.POST("/logout", authController.Logout)
 			auth.PUT("/change-password", authController.ChangePassword)
 		}
 

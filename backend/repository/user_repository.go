@@ -240,3 +240,43 @@ func (r *UserRepo) FillFollowingInfo(currentUserID *uuid.UUID, listUsers []model
 
 	return listUsers, nil
 }
+
+// SaveFCMToken saves a new FCM token for a user
+func (r *UserRepo) SaveFCMToken(userID uuid.UUID, token string, device string) error {
+	fcmToken := &model.FCMToken{
+		UserID: userID,
+		Token:  token,
+		Device: device,
+	}
+
+	// First try to update existing token for this device
+	result := r.db.Where("user_id = ? AND device = ?", userID, device).
+		Updates(fcmToken)
+
+	if result.RowsAffected == 0 {
+		// If no existing token found, create new one
+		return r.db.Create(fcmToken).Error
+	}
+
+	return result.Error
+}
+
+// RemoveFCMToken removes an FCM token
+func (r *UserRepo) RemoveFCMToken(userID uuid.UUID, token string) error {
+	return r.db.Where("user_id = ? AND token = ?", userID, token).
+		Delete(&model.FCMToken{}).Error
+}
+
+// GetUserFCMTokens gets all FCM tokens for a user
+func (r *UserRepo) GetUserFCMTokens(userID uuid.UUID) ([]string, error) {
+	var tokens []model.FCMToken
+	if err := r.db.Where("user_id = ?", userID).Find(&tokens).Error; err != nil {
+		return nil, err
+	}
+
+	var tokenStrings []string
+	for _, token := range tokens {
+		tokenStrings = append(tokenStrings, token.Token)
+	}
+	return tokenStrings, nil
+}

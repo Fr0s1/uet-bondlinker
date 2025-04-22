@@ -92,3 +92,30 @@ type Follow struct {
 func (Follow) TableName() string {
 	return "follows"
 }
+
+// FCMToken represents a Firebase Cloud Messaging token for a user
+type FCMToken struct {
+	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID    uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
+	Token     string         `json:"token" gorm:"size:255;not null"`
+	Device    string         `json:"device" gorm:"size:100"`
+	CreatedAt time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+
+	// Relations
+	User User `json:"-" gorm:"foreignKey:UserID"`
+}
+
+// TableName specifies the table name for FCMToken model
+func (FCMToken) TableName() string {
+	return "fcm_tokens"
+}
+
+// BeforeCreate will set a UUID rather than numeric ID.
+func (t *FCMToken) BeforeCreate(tx *gorm.DB) error {
+	if t.ID == uuid.Nil {
+		t.ID = uuid.New()
+	}
+	return nil
+}
