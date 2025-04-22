@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"socialnet/websocket"
 	"time"
 
 	"socialnet/config"
@@ -15,7 +16,7 @@ import (
 )
 
 // SetupRouter configures the Gin router
-func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
+func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engine {
 	// Set Gin mode
 	if cfg.Server.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -50,7 +51,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	searchController := controller.NewSearchController(repo, cfg)
 
 	// Initialize message controller
-	messageController := controller.NewMessageController(repo, cfg)
+	messageController := controller.NewMessageController(repo, hub, cfg)
 
 	// Initialize notification controller
 	notificationController := controller.NewNotificationController(repo, cfg)
@@ -158,6 +159,9 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			notifications.PUT("/:id/read", notificationController.MarkAsRead)
 			notifications.PUT("/read-all", notificationController.MarkAllAsRead)
 		}
+
+		// WebSocket endpoint
+		v1.GET("/ws", middleware.AuthMiddleware(cfg), websocket.HandleWebSocket(hub))
 	}
 
 	return r

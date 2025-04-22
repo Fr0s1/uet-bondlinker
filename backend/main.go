@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"socialnet/websocket"
 
 	"socialnet/config"
 	"socialnet/database"
@@ -37,8 +38,12 @@ func main() {
 		log.Printf("Warning: Failed to create email templates directory: %v", err)
 	}
 
+	// Initialize WebSocket hub
+	hub := websocket.NewHub()
+	go hub.Run()
+
 	// Setup router
-	r := router.SetupRouter(db, cfg)
+	r := router.SetupRouter(db, cfg, hub)
 
 	// Start server
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)

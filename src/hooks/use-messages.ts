@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui/use-toast';
 import { User } from '@/contexts/AuthContext';
@@ -27,10 +27,51 @@ export interface Conversation {
   } | null;
 }
 
-export const useConversations = (user?: User) => {
-  const queryClient = useQueryClient();
+export const updateLastMessage = (queryClient: QueryClient, conversationId: string, message: Message, isRead: boolean) => {
+  queryClient.setQueryData(['conversations'], (oldConversations: Conversation[]) => {
+    return oldConversations.map(it => {
+      if (it.id != conversationId) {
+        return it
+      }
+      return {
+        ...it,
+        lastMessage: {
+          content: message.content,
+          createdAt: message.createdAt,
+          isRead: isRead
+        }
+      }
+    }).sort((a, b) => {
+      return new Date(b.lastMessage?.createdAt || 0).getTime() - new Date(a.lastMessage?.createdAt || 0).getTime()
+    })
+  })
+}
 
-  const { data: conversations, isLoading, error } = useQuery<Conversation[]>({
+export const markAsReadLocal = (queryClient: QueryClient, conversationId: string) => {
+  queryClient.setQueryData(['conversations'], (oldConversations: Conversation[]) => {
+    return oldConversations.map(it => {
+      if (it.id != conversationId) {
+        return it
+      }
+      return {
+        ...it,
+        lastMessage: {
+          ...it.lastMessage,
+          isRead: true
+        }
+      }
+    })
+  })
+}
+
+export const appendMessage = (queryClient: QueryClient, conversationId: string, message: Message) => {
+  queryClient.setQueryData(['messages', conversationId, 1], (oldMessages: Message[] | undefined) => {
+    return [...(oldMessages || []), message]
+  })
+}
+
+export const useConversations = (user?: User) => {
+  const { data: conversations, isLoading, error, refetch } = useQuery<Conversation[]>({
     queryKey: ['conversations'],
     queryFn: () => api.get<Conversation[]>('/conversations'),
     enabled: !!user
@@ -39,7 +80,7 @@ export const useConversations = (user?: User) => {
   const createConversation = useMutation<Conversation, Error, string>({
     mutationFn: (userId: string) => api.post<Conversation>('/conversations', { recipientId: userId }),
     onSuccess: (newConversation) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      refetch()
       toast({
         title: "Conversation created",
         description: "You can now start messaging this user.",
@@ -53,6 +94,7 @@ export const useConversations = (user?: User) => {
     isLoading,
     error,
     createConversation,
+    refetch,
   };
 };
 
@@ -74,13 +116,15 @@ export const useConversation = (conversationId: string) => {
       queryClient.setQueryData(['messages', conversationId, 1], (oldData: Message[] | undefined) => {
         return oldData ? [...oldData, newMessage] : [newMessage];
       });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      updateLastMessage(queryClient, conversationId, newMessage, true)
     },
   });
 
   const markAsRead = useMutation<void, Error, void>({
     mutationFn: () => api.post<void>(`/conversations/${conversationId}/read`),
     onSuccess: () => {
+      markAsReadLocal(queryClient, conversationId)
     },
   });
 
@@ -95,7 +139,6 @@ export const useConversation = (conversationId: string) => {
 
 export const useMessages = (conversationId: string) => {
   const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
 
   const { data: messages, isLoading, error } = useQuery<Message[]>({
     queryKey: ['messages', conversationId, page],

@@ -1,12 +1,15 @@
 package controller
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"socialnet/config"
 	"socialnet/middleware"
 	"socialnet/model"
 	"socialnet/repository"
 	"socialnet/util"
+	"socialnet/websocket"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,15 +17,17 @@ import (
 
 // MessageController handles message-related requests
 type MessageController struct {
-	repo *repository.Repository
-	cfg  *config.Config
+	repo  *repository.Repository
+	wsHub *websocket.Hub
+	cfg   *config.Config
 }
 
 // NewMessageController creates a new MessageController
-func NewMessageController(repo *repository.Repository, cfg *config.Config) *MessageController {
+func NewMessageController(repo *repository.Repository, wsHub *websocket.Hub, cfg *config.Config) *MessageController {
 	return &MessageController{
-		repo: repo,
-		cfg:  cfg,
+		repo:  repo,
+		wsHub: wsHub,
+		cfg:   cfg,
 	}
 }
 
@@ -71,36 +76,25 @@ func (mc *MessageController) GetConversation(c *gin.Context) {
 	}
 
 	// Get conversation to check if user is part of it
-	conv, err := mc.repo.Message.FindConversation(convID)
+	conversation, err := mc.repo.Message.FindConversation(convID, userID)
 	if err != nil {
 		util.RespondWithError(c, http.StatusNotFound, "Conversation not found")
 		return
 	}
 
-	// Verify user is part of conversation
-	if conv.UserID1 != userID && conv.UserID2 != userID {
-		util.RespondWithError(c, http.StatusForbidden, "Not authorized to view this conversation")
-		return
+	var lastMessageBrief *model.MessageBrief
+	if conversation.LastMessage != nil {
+		lastMessageBrief = &model.MessageBrief{
+			Content:   conversation.LastMessage.Content,
+			CreatedAt: conversation.LastMessage.CreatedAt,
+			IsRead:    conversation.LastMessage.IsRead || conversation.LastMessage.SenderID == userID, // Message is read if user is sender
+		}
 	}
 
-	// Determine which user is the other person in the conversation
-	var otherUserID uuid.UUID
-	if conv.UserID1 == userID {
-		otherUserID = conv.UserID2
-	} else {
-		otherUserID = conv.UserID1
-	}
-
-	// Get other user's info
-	otherUser, err := mc.repo.User.FindByID(otherUserID)
-	if err != nil {
-		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch user details")
-		return
-	}
-
-	util.RespondWithSuccess(c, http.StatusOK, "success", gin.H{
-		"id":        conv.ID,
-		"recipient": otherUser,
+	util.RespondWithSuccess(c, http.StatusOK, "success", model.ConversationResponse{
+		ID:          conversation.ID,
+		Recipient:   conversation.Recipient,
+		LastMessage: lastMessageBrief,
 	})
 }
 
@@ -141,23 +135,15 @@ func (mc *MessageController) CreateConversation(c *gin.Context) {
 	}
 
 	// Create or get existing conversation
-	conversation, err := mc.repo.Message.CreateConversation(userID, recipientID)
+	conversation, err := mc.repo.Message.UpsertConversation(userID, recipientID)
 	if err != nil {
 		util.RespondWithError(c, http.StatusInternalServerError, "Failed to create conversation")
 		return
 	}
 
-	// Get recipient details
-	recipient, err := mc.repo.User.FindByID(recipientID)
-	if err != nil {
-		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch recipient details")
-		return
-	}
-
-	util.RespondWithSuccess(c, http.StatusCreated, "success", gin.H{
-		"id":          conversation.ID,
-		"recipient":   recipient,
-		"lastMessage": nil,
+	util.RespondWithSuccess(c, http.StatusCreated, "success", model.ConversationResponse{
+		ID:        conversation.ID,
+		Recipient: conversation.Recipient,
 	})
 }
 
@@ -183,15 +169,13 @@ func (mc *MessageController) GetMessages(c *gin.Context) {
 	}
 
 	// Get conversation to check if user is part of it
-	conv, err := mc.repo.Message.FindConversation(convID)
+	_, err = mc.repo.Message.FindConversation(convID, userID)
 	if err != nil {
-		util.RespondWithError(c, http.StatusNotFound, "Conversation not found")
-		return
-	}
-
-	// Verify user is part of conversation
-	if conv.UserID1 != userID && conv.UserID2 != userID {
-		util.RespondWithError(c, http.StatusForbidden, "Not authorized to view these messages")
+		if errors.Is(err, repository.ErrConversationNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, err.Error())
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch conversation", err)
 		return
 	}
 
@@ -206,7 +190,7 @@ func (mc *MessageController) GetMessages(c *gin.Context) {
 	// Get messages
 	messages, err := mc.repo.Message.FindMessages(convID, filter)
 	if err != nil {
-		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch messages")
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch messages", err)
 		return
 	}
 
@@ -235,15 +219,13 @@ func (mc *MessageController) CreateMessage(c *gin.Context) {
 	}
 
 	// Get conversation to check if user is part of it
-	conv, err := mc.repo.Message.FindConversation(convID)
+	conv, err := mc.repo.Message.FindConversation(convID, userID)
 	if err != nil {
-		util.RespondWithError(c, http.StatusNotFound, "Conversation not found")
-		return
-	}
-
-	// Verify user is part of conversation
-	if conv.UserID1 != userID && conv.UserID2 != userID {
-		util.RespondWithError(c, http.StatusForbidden, "Not authorized to send messages in this conversation")
+		if errors.Is(err, repository.ErrConversationNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, "Conversation not found")
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to fetch conversation", err)
 		return
 	}
 
@@ -279,6 +261,10 @@ func (mc *MessageController) CreateMessage(c *gin.Context) {
 		return
 	}
 
+	msgBytes, _ := json.Marshal(model.NewWsMessage(recipientID, model.WsMessageTypeMessage, message))
+
+	mc.wsHub.SendToUser(recipientID, msgBytes)
+
 	util.RespondWithSuccess(c, http.StatusCreated, "success", message)
 }
 
@@ -305,7 +291,11 @@ func (mc *MessageController) MarkConversationAsRead(c *gin.Context) {
 
 	// Mark messages as read
 	if err := mc.repo.Message.MarkMessagesAsRead(convID, userID); err != nil {
-		util.RespondWithError(c, http.StatusInternalServerError, "Failed to mark messages as read")
+		if errors.Is(err, repository.ErrConversationNotFound) {
+			util.RespondWithError(c, http.StatusNotFound, err.Error())
+			return
+		}
+		util.RespondWithError(c, http.StatusInternalServerError, "Failed to mark messages as read", err)
 		return
 	}
 

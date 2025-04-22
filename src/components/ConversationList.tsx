@@ -23,16 +23,13 @@ interface Conversation {
 }
 
 interface ConversationListProps {
+  conversations: Conversation[];
+  isLoading: boolean;
   selectedConversationId: string | null;
   onSelectConversation: (id: string) => void;
 }
 
-const ConversationList = ({ selectedConversationId, onSelectConversation }: ConversationListProps) => {
-  const { user } = useAuth();
-
-  // Fetch conversations with proper typing
-  const { conversations, isLoading } = useConversations(user)
-
+const ConversationList = ({ selectedConversationId, onSelectConversation, conversations, isLoading }: ConversationListProps) => {
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl p-4 h-[calc(100vh-120px)] flex items-center justify-center card-shadow">

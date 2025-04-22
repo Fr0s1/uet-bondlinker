@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var ErrConversationNotFound = gorm.ErrRecordNotFound
+
 // MessageRepository handles database operations for messages
 type MessageRepository struct {
 	db *gorm.DB
@@ -20,18 +22,18 @@ func NewMessageRepository(db *gorm.DB) *MessageRepository {
 	return &MessageRepository{db}
 }
 
-// CreateConversation creates a new conversation between two users or returns existing one
-func (r *MessageRepository) CreateConversation(userID1, userID2 uuid.UUID) (*model.Conversation, error) {
+// UpsertConversation creates a new conversation between two users or returns existing one
+func (r *MessageRepository) UpsertConversation(senderId, recipientId uuid.UUID) (*model.Conversation, error) {
 	// Check if users exist
-	var user1, user2 model.User
-	if err := r.db.First(&user1, "id = ?", userID1).Error; err != nil {
+	var sender, recipient model.User
+	if err := r.db.First(&sender, "id = ?", senderId).Error; err != nil {
 		return nil, errors.New("sender not found")
 	}
-	if err := r.db.First(&user2, "id = ?", userID2).Error; err != nil {
+	if err := r.db.First(&recipient, "id = ?", recipientId).Error; err != nil {
 		return nil, errors.New("recipient not found")
 	}
 
-	ids := []uuid.UUID{userID1, userID2}
+	ids := []uuid.UUID{senderId, recipientId}
 	slices.SortStableFunc(ids, func(a, b uuid.UUID) int {
 		return cmp.Compare(a.String(), b.String())
 	})
@@ -62,6 +64,8 @@ func (r *MessageRepository) CreateConversation(userID1, userID2 uuid.UUID) (*mod
 		return nil, err
 	}
 
+	conversation.Recipient = recipient
+
 	return &conversation, nil
 }
 
@@ -69,10 +73,46 @@ func (r *MessageRepository) CreateConversation(userID1, userID2 uuid.UUID) (*mod
 func (r *MessageRepository) FindConversations(userID uuid.UUID) ([]model.ConversationResponse, error) {
 	// Find all conversations where the user is either user1 or user2
 	var conversations []model.Conversation
-	if err := r.db.Where(
-		"user_id1 = ? OR user_id2 = ?", userID, userID,
+	if err := r.db.Preload("LastMessage").Where(
+		"(user_id1 = ? OR user_id2 = ?) and last_message_id is not null", userID, userID,
 	).Order("updated_at DESC").Find(&conversations).Error; err != nil {
 		return nil, err
+	}
+
+	if len(conversations) == 0 {
+		return nil, nil
+	}
+
+	userIds := make([]uuid.UUID, 0, len(conversations))
+	lastMessageIds := make([]uuid.UUID, 0, len(conversations))
+	for _, conv := range conversations {
+		if conv.UserID1 == userID {
+			userIds = append(userIds, conv.UserID2)
+		} else {
+			userIds = append(userIds, conv.UserID1)
+		}
+	}
+
+	var userInfos []model.User
+	if err := r.db.Model(&model.User{}).Where("id in ?", userIds).Find(&userInfos).Error; err != nil {
+		return nil, err
+	}
+
+	var userMap = make(map[uuid.UUID]model.User)
+	for _, user := range userInfos {
+		userMap[user.ID] = user
+	}
+
+	var lastMessageMap = make(map[uuid.UUID]model.Message)
+	if len(lastMessageIds) > 0 {
+		var lastMessages []model.Message
+		if err := r.db.Model(&model.Message{}).Where("id in ?", lastMessageIds).Find(&lastMessages).Error; err != nil {
+			return nil, err
+		}
+
+		for _, message := range lastMessageMap {
+			lastMessageMap[message.ID] = message
+		}
 	}
 
 	var results []model.ConversationResponse
@@ -85,30 +125,19 @@ func (r *MessageRepository) FindConversations(userID uuid.UUID) ([]model.Convers
 			otherUserID = conv.UserID1
 		}
 
-		// Get other user's info
-		var otherUser model.User
-		if err := r.db.Model(&model.User{}).Where("id = ?", otherUserID).First(&otherUser).Error; err != nil {
-			continue // Skip this conversation if user not found
-		}
-
 		// Get last message in this conversation
-		var lastMessage model.Message
-		lastMessageErr := r.db.Where(
-			"conversation_id = ?", conv.ID,
-		).Order("created_at DESC").First(&lastMessage).Error
-
 		var lastMessageBrief *model.MessageBrief
-		if lastMessageErr == nil {
+		if conv.LastMessage != nil {
 			lastMessageBrief = &model.MessageBrief{
-				Content:   lastMessage.Content,
-				CreatedAt: lastMessage.CreatedAt,
-				IsRead:    lastMessage.IsRead || lastMessage.SenderID == userID, // Message is read if user is sender
+				Content:   conv.LastMessage.Content,
+				CreatedAt: conv.LastMessage.CreatedAt,
+				IsRead:    conv.LastMessage.IsRead || conv.LastMessage.SenderID == userID, // Message is read if user is sender
 			}
 		}
 
 		results = append(results, model.ConversationResponse{
 			ID:          conv.ID,
-			Recipient:   otherUser,
+			Recipient:   userMap[otherUserID],
 			LastMessage: lastMessageBrief,
 		})
 	}
@@ -117,31 +146,46 @@ func (r *MessageRepository) FindConversations(userID uuid.UUID) ([]model.Convers
 }
 
 // FindConversation gets a specific conversation
-func (r *MessageRepository) FindConversation(id uuid.UUID) (*model.Conversation, error) {
+func (r *MessageRepository) FindConversation(id uuid.UUID, senderId uuid.UUID) (*model.Conversation, error) {
 	var conversation model.Conversation
-	if err := r.db.First(&conversation, "id = ?", id).Error; err != nil {
+	if err := r.db.Preload("LastMessage").First(&conversation, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	return &conversation, nil
-}
 
-// FindConversationWithUser finds or creates a conversation with another user
-func (r *MessageRepository) FindConversationWithUser(userID, otherUserID uuid.UUID) (*model.Conversation, error) {
-	return r.CreateConversation(userID, otherUserID)
-}
-
-// GetConversationUsers gets the users in a conversation
-func (r *MessageRepository) GetConversationUsers(conversationID uuid.UUID) (uuid.UUID, uuid.UUID, error) {
-	var conversation model.Conversation
-	if err := r.db.First(&conversation, "id = ?", conversationID).Error; err != nil {
-		return uuid.Nil, uuid.Nil, err
+	if conversation.UserID1 != senderId && conversation.UserID2 != senderId {
+		return nil, ErrConversationNotFound
 	}
-	return conversation.UserID1, conversation.UserID2, nil
+
+	var recipientId uuid.UUID
+	if conversation.UserID1 == senderId {
+		recipientId = conversation.UserID2
+	} else {
+		recipientId = conversation.UserID1
+	}
+
+	var recipient model.User
+	if err := r.db.First(&recipient, "id = ?", recipientId).Error; err != nil {
+		return nil, err
+	}
+
+	conversation.Recipient = recipient
+
+	return &conversation, nil
 }
 
 // CreateMessage creates a new message
 func (r *MessageRepository) CreateMessage(message *model.Message) error {
-	return r.db.Create(message).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(message).Error
+		if err != nil {
+			return err
+		}
+
+		return tx.Model(&model.Conversation{}).Where("id = ?", message.ConversationID).Updates(map[string]any{
+			"last_message_id": message.ID,
+			"updated_at":      gorm.Expr("CURRENT_TIMESTAMP"),
+		}).Error
+	})
 }
 
 // FindMessages gets all messages in a conversation
@@ -178,25 +222,12 @@ func (r *MessageRepository) FindMessages(conversationID uuid.UUID, filter model.
 // MarkMessagesAsRead marks all messages in a conversation as read for a user
 func (r *MessageRepository) MarkMessagesAsRead(conversationID, userID uuid.UUID) error {
 	// Get the users in the conversation
-	user1, user2, err := r.GetConversationUsers(conversationID)
+	conv, err := r.FindConversation(conversationID, userID)
 	if err != nil {
 		return err
 	}
 
-	// Verify user is part of conversation
-	if userID != user1 && userID != user2 {
-		return errors.New("user not part of this conversation")
-	}
-
-	// Mark all messages from the other user as read
-	var otherUserID uuid.UUID
-	if userID == user1 {
-		otherUserID = user2
-	} else {
-		otherUserID = user1
-	}
-
 	return r.db.Model(&model.Message{}).
-		Where("conversation_id = ? AND sender_id = ? AND recipient_id = ? AND is_read = ?", conversationID, otherUserID, userID, false).
+		Where("conversation_id = ? AND sender_id = ? AND recipient_id = ? AND is_read = ?", conversationID, conv.Recipient.ID, userID, false).
 		Update("is_read", true).Error
 }

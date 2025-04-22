@@ -1,6 +1,7 @@
 package util
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,10 @@ func RespondWithSuccess(c *gin.Context, statusCode int, message string, data int
 }
 
 // RespondWithError sends an error response
-func RespondWithError(c *gin.Context, statusCode int, errorMessage string) {
+func RespondWithError(c *gin.Context, statusCode int, errorMessage string, error ...error) {
+	if len(error) > 0 {
+		log.Printf("Error: %v", error[0])
+	}
 	c.JSON(statusCode, Response{
 		Success: false,
 		Error:   errorMessage,
