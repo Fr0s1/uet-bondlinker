@@ -19,6 +19,7 @@ import NotFound from '@/pages/NotFound';
 
 import './App.css';
 import { MainLayout } from './components/MainLayout';
+import { FCMProvider } from './components/FCMProvider';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -34,29 +35,31 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <div className="min-h-screen flex flex-col">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/trending" element={<Trending />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/c/:conversationId" element={<Messages />} />
-                <Route path="/change-password" element={<ChangePassword />} />
-              </Route>
+        <FCMProvider>
+          <Router>
+            <div className="min-h-screen flex flex-col">
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/profile/:username" element={<Profile />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/trending" element={<Trending />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/messages/c/:conversationId" element={<Messages />} />
+                  <Route path="/change-password" element={<ChangePassword />} />
+                </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </div>
-        </Router>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+            </div>
+          </Router>
+        </FCMProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

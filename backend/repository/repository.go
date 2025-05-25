@@ -24,6 +24,9 @@ type UserRepository interface {
 	CountFollowing(userID uuid.UUID) (int, error)
 	SearchUsers(query string, filter model.Pagination) ([]model.User, error)
 	GetSuggestedUsers(userID uuid.UUID, filter model.Pagination) ([]model.User, error)
+	GetUserFCMTokens(userID uuid.UUID) ([]string, error)
+	SaveFCMToken(userID uuid.UUID, token string, device string) error
+	RemoveFCMToken(userID uuid.UUID, token string) error
 }
 
 // PostRepository handles database operations related to posts

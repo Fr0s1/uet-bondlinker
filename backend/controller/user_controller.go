@@ -419,3 +419,27 @@ func (uc *UserController) GetSuggestedUsers(c *gin.Context) {
 
 	util.RespondWithSuccess(c, http.StatusOK, "success", suggestedUsers)
 }
+
+func (uc *UserController) SaveFCMToken(c *gin.Context) {
+	userIDStr, err := middleware.GetUserID(c)
+	if err != nil {
+		util.RespondWithError(c, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	userID, _ := uuid.Parse(userIDStr)
+
+	var req model.SaveFCMTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		util.RespondWithError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Save FCM token if provided
+	err = uc.repo.User.SaveFCMToken(userID, req.Token, req.Device)
+	if err != nil {
+		util.RespondWithError(c, http.StatusInternalServerError, "Error saving FCM token")
+		return
+	}
+	util.RespondWithSuccess(c, http.StatusOK, "success", nil)
+}

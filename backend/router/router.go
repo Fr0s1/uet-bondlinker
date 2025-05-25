@@ -82,17 +82,15 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 		}
 
 		// User routes
-		users := v1.Group("/users")
+		users := v1.Group("/users", middleware.AuthMiddleware(cfg))
 		{
 			users.GET("", userController.GetUsers)
 			users.GET("/:id", userController.GetUser)
 			users.GET("/username/:username", userController.GetUserByUsername)
-
-			// Protected routes
-			users.Use(middleware.AuthMiddleware(cfg))
 			users.GET("/suggested", userController.GetSuggestedUsers)
 			users.PUT("/:id", userController.UpdateUser)
 			users.GET("/me", userController.GetCurrentUser)
+			users.POST("/fcm-token", userController.SaveFCMToken)
 			users.POST("/follow/:id", userController.FollowUser)
 			users.DELETE("/follow/:id", userController.UnfollowUser)
 			users.GET("/followers", userController.GetFollowers)
@@ -100,21 +98,17 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 		}
 
 		// File upload routes
-		uploads := v1.Group("/uploads")
+		uploads := v1.Group("/uploads", middleware.AuthMiddleware(cfg))
 		{
-			uploads.Use(middleware.AuthMiddleware(cfg))
 			uploads.POST("", fileController.UploadFile)
 		}
 
 		// Post routes
-		posts := v1.Group("/posts")
+		posts := v1.Group("/posts", middleware.AuthMiddleware(cfg))
 		{
 			posts.GET("", postController.GetPosts)
 			posts.GET("/:id", postController.GetPost)
 			posts.GET("/trending", postController.GetTrending)
-
-			// Protected routes
-			posts.Use(middleware.AuthMiddleware(cfg))
 			posts.POST("", postController.CreatePost)
 			posts.PUT("/:id", postController.UpdatePost)
 			posts.DELETE("/:id", postController.DeletePost)
@@ -132,7 +126,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 		}
 
 		// Search routes
-		search := v1.Group("/search")
+		search := v1.Group("/search", middleware.AuthMiddleware(cfg))
 		{
 			search.GET("", searchController.Search)
 			search.GET("/users", searchController.SearchUsers)
@@ -140,9 +134,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 		}
 
 		// Message routes
-		conversations := v1.Group("/conversations")
+		conversations := v1.Group("/conversations", middleware.AuthMiddleware(cfg))
 		{
-			conversations.Use(middleware.AuthMiddleware(cfg))
 			conversations.GET("", messageController.GetConversations)
 			conversations.POST("", messageController.CreateConversation)
 			conversations.GET("/:id", messageController.GetConversation)
@@ -152,9 +145,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, hub *websocket.Hub) *gin.Engin
 		}
 
 		// Notification routes
-		notifications := v1.Group("/notifications")
+		notifications := v1.Group("/notifications", middleware.AuthMiddleware(cfg))
 		{
-			notifications.Use(middleware.AuthMiddleware(cfg))
 			notifications.GET("", notificationController.GetNotifications)
 			notifications.GET("/unread-count", notificationController.GetUnreadCount)
 			notifications.PUT("/:id/read", notificationController.MarkAsRead)

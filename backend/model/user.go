@@ -61,6 +61,11 @@ type UserLogin struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type SaveFCMTokenReq struct {
+	Token  string `json:"token" binding:"required"`
+	Device string `json:"device" binding:"required"`
+}
+
 // UserUpdate represents data that can be updated for a user
 type UserUpdate struct {
 	Name     *string `json:"name,omitempty"`
@@ -97,8 +102,8 @@ func (Follow) TableName() string {
 type FCMToken struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	UserID    uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
-	Token     string         `json:"token" gorm:"size:255;not null"`
-	Device    string         `json:"device" gorm:"size:100"`
+	Token     string         `json:"token" gorm:"not null"`
+	Device    string         `json:"device"`
 	CreatedAt time.Time      `json:"createdAt" gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`

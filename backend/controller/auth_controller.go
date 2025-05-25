@@ -98,17 +98,9 @@ func (ac *AuthController) Register(c *gin.Context) {
 	})
 }
 
-// LoginInput represents login request data
-type LoginInput struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-	FCMToken string `json:"fcmToken"`
-	Device   string `json:"device"`
-}
-
 // Login authenticates a user and returns a JWT token
 func (ac *AuthController) Login(c *gin.Context) {
-	var input LoginInput
+	var input model.UserLogin
 	if err := c.ShouldBindJSON(&input); err != nil {
 		util.RespondWithError(c, http.StatusBadRequest, "Invalid input")
 		return
@@ -127,19 +119,10 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret)
+	token, err := util.GenerateToken(user.ID.String(), ac.cfg.JWT.Secret, ac.cfg.JWT.ExpiryTime)
 	if err != nil {
 		util.RespondWithError(c, http.StatusInternalServerError, "Error generating token")
 		return
-	}
-
-	// Save FCM token if provided
-	if input.FCMToken != "" && input.Device != "" {
-		err = ac.repo.User.SaveFCMToken(user.ID, input.FCMToken, input.Device)
-		if err != nil {
-			util.RespondWithError(c, http.StatusInternalServerError, "Error saving FCM token")
-			return
-		}
 	}
 
 	util.RespondWithSuccess(c, http.StatusOK, "Login successful", model.AuthResponse{

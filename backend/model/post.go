@@ -12,7 +12,7 @@ type Post struct {
 	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	UserID        uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
 	Content       string         `json:"content" gorm:"type:text;not null"`
-	Image         *string        `json:"image,omitempty" gorm:"size:255"`
+	Image         *string        `json:"image,omitempty"`
 	LikesCount    int            `json:"likes" gorm:"default:0"`
 	CommentsCount int            `json:"comments" gorm:"default:0"`
 	SharesCount   int            `json:"shares" gorm:"default:0"`

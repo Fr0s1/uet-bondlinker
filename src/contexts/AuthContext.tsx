@@ -72,11 +72,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const data = await api.post<AuthResponse>("/auth/login", { 
-        email, 
+      const data = await api.post<AuthResponse>("/auth/login", {
+        email,
         password,
-        fcmToken: localStorage.getItem('fcmToken'),
-        device: navigator.userAgent
       });
       localStorage.setItem("token", data.token);
       queryClient.setQueryData(['auth'], () => {
